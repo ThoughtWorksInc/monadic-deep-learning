@@ -298,7 +298,7 @@ Differentiable functions \lstinline{max} and \lstinline{dot} used in \lstinline{
 DeepLearning.scala allows \glspl{differentiable expression} that belong to one hyperparameter configuration to work together with \glspl{differentiable expression} that belong to another hyperparameter configuration. 
 
 \begin{lstlisting}[caption={Hyperparameters for Adagrad}, label={hyperparameters2}]
-val hyperparameters2 = Factory[Builtins with Adagrad].newInstance(
+val hyperparameters2 = Factory[Builtins with Adagrad with FixedLearningRate].newInstance(
   learningRate = 0.002,
   eps = 0.0001
 )
@@ -384,15 +384,31 @@ trait Adagrad extends INDArrayWeights {
 }
 \end{lstlisting}
 
+The implementation of \lstinline{Adagrad} \gls{plug-in} consists of:
 
-% TODO: the harder version
+\begin{itemize}
+  \item Declaring \lstinline{INDArrayWeights} \gls{plug-in} as a dependency.
+  \item Adding a new hyperparmaeter \lstinline{eps}, which can be configured by a named parameter in \lstinline{Factory.newInstance()}.
+  \item Changing the upper type bound of abstract type \lstinline{INDArrayWeight} to \lstinline{INDArrayWeightApi}.
+  \begin{itemize}
+    \item Adding a new internal state \lstinline{cache} in \lstinline{INDArrayWeightApi}.
+  \end{itemize}
+  \item Changing the upper type bound of abstract type \lstinline{INDArrayOptimizer} to \lstinline{INDArrayOptimizerApi}.
+  \begin{itemize}
+    \item Changing the behavior of \lstinline{delta} method \lstinline{cache} in \lstinline{INDArrayOptimizerApi}.
+  \end{itemize}
+\end{itemize}
+
+Thanks to Scala's Class Linearizion\cite{odersky2017scala} feature, \lstinline{Adagrad} \gls{plug-in} can change the computation of \lstinline{delta} without the knowledge of which \glspl{plug-in} other than \lstinline{Adagrad} are changing \lstinline{delta}, too. This ability is even more extensible than the original Expression Problem
+\begin{anonsuppress}
+  \cite{yang2017expression}
+\end{anonsuppress}
+.
 
 \section{Implementation}
-% TODO:
 \subsection{Backpropagation through Monads\label{backpropagation}}
 % TODO:
-\subsection{Accessing Scala Language Features on the Type Level\label{typelevel}}
-% TODO:
+\section{Conclusion}
 
 \clearpage
 % Appendix

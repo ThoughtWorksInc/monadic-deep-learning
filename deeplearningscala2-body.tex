@@ -1,6 +1,6 @@
 \section{Introduction}
 
-Backpropagation\cite{rumelhart1985learning} is the key feature in many deep learning frameworks. Combining with other optimization algorithms\cite{kingma2014adam, zeiler2012adadelta}, deep learning frameworks change the values of trainable variables in neural networks during iterations, producing a model of knowledge learnt from training data.
+Backpropagation\cite{rumelhart1985learning} is the key feature in many deep learning frameworks. Combining with other optimization algorithms\cite{kingma2014adam, zeiler2012adadelta,duchi2011adaptive}, deep learning frameworks change the values of trainable variables in neural networks during iterations, producing a model of knowledge learnt from training data.
 
 Backpropagation can be seen as a special-purpose automatic differentiation\cite{baydin2015automatic}. Many successful Python or Lua deep learning frameworks\cite{collobert2008torch,bergstra2010theano,tokui2015chainer,google2017eager,paszke2017pytorch} implement a common set of features of auto differentiation:
 
@@ -257,9 +257,9 @@ def parallelByDefault(a: INDArrayLayer, b: INDArrayLayer, c: INDArrayLayer, d: I
 
 By combining both applicative functors and monads, DeepLearning.scala supports dynamic neural network and still allows the independent parts of the neural network to run in parallel. In addition, the backward pass of differentiable functions built from parallel applicative functors or built-in vector binary operators will be executed in parallel, too.
 
-\subsection{The Expression Problem, Harder Version}
+\subsection{Plug-in}
 
-\subsubsection{Using \Glspl{plug-in}}
+\subsubsection{Using Plug-ins}
 
 Nowadays neural networks contain hyperparameters specified by human. In DeepLearning.scala, those hyperparameters are configured as named parameters provided by \glspl{plug-in}.
 
@@ -271,7 +271,7 @@ val hyperparameters1 = Factory[Builtins with FixedLearningRate].newInstance(lear
 
 \lstinline{Builtins} and \lstinline{FixedLearningRate} are \glspl{plug-in}. The name parameters like \lstinline{learningRate} may may differ when different \glspl{plug-in} are used.
 
-\Glspl{differentiable expression} and \glspl{trainable variable} introduced in section \ref{concepts} are actually path-dependent types\cite{amin2014foundations} defined inside \glspl{plug-in}, which can be \lstinline{import}ed as shown in Listing \ref{import_types}.
+\Glspl{differentiable expression} and \glspl{trainable variable} introduced in section \ref{concepts} are actually path-dependent types\cite{amin2014foundations} defined inside \lstinline{hyperparameter1}, whose type is a refinement type of \lstinline{(Builtins with FixedLearningRate)}\footnote{We omit the type annotation for \lstinline{hyperparameter1} in this paper because the refinement type is too long. Add a \lstinline{-Xprint:typer} flag to your Scala compiler if you want to see the actual type.}, which can be \lstinline{import}ed as shown in Listing \ref{import_types}.
 
 \begin{lstlisting}[caption={Importing \Glspl{differentiable expression} and \glspl{trainable variable} types}, label={import_types}]
 import hyperparameters1.{INDArrayLayer, INDArrayWeight}
@@ -298,7 +298,7 @@ Differentiable functions \lstinline{max} and \lstinline{dot} used in \lstinline{
 DeepLearning.scala allows \glspl{differentiable expression} that belong to one hyperparameter configuration to work together with \glspl{differentiable expression} that belong to another hyperparameter configuration. 
 
 \begin{lstlisting}[caption={Hyperparameters for Adagrad}, label={hyperparameters2}]
-val hyperparameters2 = Factory[Builtins with FixedLearningRate with Adagrad].newInstance(
+val hyperparameters2 = Factory[Builtins with Adagrad].newInstance(
   learningRate = 0.002,
   eps = 0.0001
 )
@@ -326,10 +326,12 @@ Listing \ref{layer2} created a two layer neural network that has heterogeneous h
 
 \begin{itemize}
   \item \lstinline{weight1} is optimized by ordinary gradient descent with a fixed learning rate 0.1;
-  \item \lstinline{weight2} is optimized by Adagrad with an initial learning rate 0.002.
+  \item \lstinline{weight2} is optimized by Adagrad\cite{duchi2011adaptive} with an initial learning rate 0.002.
 \end{itemize}
 
-DeepLearning.scala's \gls{plug-in} mechanism is a solution to the well known Expression Problem\cite{wadler1998expression}. All DeepLearning.scala features, including types and operations, are implemented as \glspl{plug-in}. The \lstinline{Builtins} \gls{plug-in} used in Listing \ref{hyperparameters1} and \ref{hyperparameters2} is simply a shortcut of many other built-in \glspl{plug-in}.
+DeepLearning.scala's \gls{plug-in} mechanism is a solution to the well known Expression Problem, whose goal is to define a datatype by cases, where one can add new cases to the datatype and new functions over the datatype, without recompiling existing code, and while retaining static type safety (e.g., no casts)\cite{wadler1998expression}.
+
+All DeepLearning.scala features, including types and operations, are implemented as \glspl{plug-in}. The \lstinline{Builtins} \gls{plug-in} used in Listing \ref{hyperparameters1} and \ref{hyperparameters2} is simply a shortcut of many other built-in \glspl{plug-in}.
 
 For example, hyperparameter initialization in Listing \ref{hyperparameters1} is synonymous with the following Listing \ref{hyperparameters1_alternative}.
 
@@ -338,11 +340,50 @@ val hyperparameters1 = Factory[ImplicitsSingleton with Layers with Weights with 
 ].newInstance(learningRate = 0.01)
 \end{lstlisting}
 
-All those \glspl{plug-in} are optional. If you remove \lstinline{FloatTraining with FloatLiterals with FloatWeights with FloatLayers with CumulativeFloatLayers}, then all types, such as  \lstinline{FloatLayer} or \lstinline{FloatWeight} will no longer exist in \lstinline{hyperparameters1}, so do the operations for those types.
+All those \glspl{plug-in} are optional. They provide either some special \textit{datatypes}, \textit{cases} or \textit{functions} as described in the original Expression Problem.
 
-In addition, 
+\begin{description}
+\item[datatypes] For example, if you remove \lstinline{FloatTraining}, \lstinline{FloatLiterals},  \lstinline{FloatWeights}, \lstinline{FloatLayers} and \lstinline{CumulativeFloatLayers} from Listing \ref{hyperparameters1_alternative}, then all types for single precision floating-points, such as  \lstinline{FloatLayer} or \lstinline{FloatWeight} will no longer exist in \lstinline{hyperparameters1}, so do the operations for them.
+\item[cases] However, if you only remove \lstinline{FloatLayers} and {CumulativeFloatLayers} from Listing \ref{hyperparameters1_alternative}, then \lstinline{max}, \lstinline{dot} and other arithmetic operations will no longer exist in \lstinline{hyperparameters1}. Users can also create other \glspl{plug-in} for additional cases, \href{https://gist.github.com/Atry/15b7d9a4c63d95ad3d67e94bf20b4f69#file-readme-ipynb}{Convolutional Operations} for example.
+\item[functions] Most of \glspl{plug-in} are designed for the functionality related to automatically differentiation, however, \lstinline{Names} \gls{plug-in} is not one of them. If you remove \lstinline{Names} from Listing \ref{hyperparameters1_alternative}, then the public methods \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/plugins/Names$Layer.html#name:sourcecode.Name}{\lstinline{name}} and \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/plugins/Names$Layer.html#fullName:sourcecode.FullName}{\lstinline{fullName}} will disappea, while the mechanism of automatically differentiation will still keep working.
+\end{description}
 
-\subsubsection{Creating \Glspl{plug-in}}
+\subsubsection{Creating Plug-in}
+
+What makes our \gls{plug-in} extraordinary in comparison to original Expression Problem is the ability to modify existing behaviors. Let's see the implementation of \lstinline{Adagrad} \gls{plug-in} as an example\footnote{\lstinline{Adagrad} is a non-built-in \gls{plug-in}, which can be found on Github Gist: \url{https://gist.github.com/Atry/89ee1baa4c161b8ccc1b82cdd9c109fe\#file-readme-ipynb}}:
+
+\begin{lstlisting}[caption={The implementation of the \lstinline{Adagrad} \Gls{plug-in}}, label={Adagrad}]
+trait Adagrad extends INDArrayWeights {
+  /** The hyperparmaeter `eps`, which should be configured in `Factory.newInstance()` */
+  def eps: Double
+
+  trait INDArrayWeightApi extends super.INDArrayWeightApi { this: INDArrayWeight =>
+    /** The `cache` state injected to `INDArrayWeight` by this `Adagrad` plug-in */
+    var cache: Option[INDArray] = None
+  }
+
+  override type INDArrayWeight <: INDArrayWeightApi with Weight
+
+  trait INDArrayOptimizerApi extends super.INDArrayOptimizerApi { this: INDArrayOptimizer =>
+    private lazy val delta0: INDArray = {
+      // The original delta computed by previous plug-ins
+      val superDelta = super.delta
+      val newCache = weight.synchronized {
+        val newCache = weight.cache.getOrElse(Nd4j.zeros(superDelta.shape: _*)) + superDelta * superDelta
+        weight.cache = Some(newCache)
+        newCache
+      }
+      superDelta / (Transforms.sqrt(newCache) + eps)
+    }
+
+    /** The computation of delta, injected to `INDArrayOptimizer` by this `Adagrad` plug-in */
+    override def delta = delta0
+  }
+  
+  override type INDArrayOptimizer <: INDArrayOptimizerApi with Optimizer
+}
+\end{lstlisting}
+
 
 % TODO: the harder version
 

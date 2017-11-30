@@ -1,0 +1,15 @@
+*.aux
+*.bbl
+*.blg
+*.dvi
+*.fdb_latexmk
+*.fls
+*.glg
+*.glo
+*.gls
+*.ilg
+*.ist
+*.log
+*.out
+*.pdf
+*.dvi

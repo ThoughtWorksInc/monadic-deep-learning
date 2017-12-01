@@ -143,7 +143,7 @@ Which sub-network is selected for the \lstinline{input} should be determined by 
 def gate(input: INDArrayLayer): (DoubleLayer, DoubleLayer)
 \end{lstlisting}
 
-The control flow of gated network that we want to build is described in pseudocode \ref{GatedNetwork}.
+The control flow of gated network that we want to build is described in pseudo-code \ref{GatedNetwork}.
 
 \begin{function}[H]
   \caption{GatedNetwork()\label{GatedNetwork}}
@@ -340,12 +340,12 @@ val hyperparameters1 = Factory[ImplicitsSingleton with Layers with Weights with 
 ].newInstance(learningRate = 0.01)
 \end{lstlisting}
 
-All those \glspl{plug-in} are optional. They provide either some special \textit{datatypes}, \textit{cases} or \textit{functions} as described in the original Expression Problem.
+All those \glspl{plug-in} are optional. They provide either some special \textit{data types}, \textit{cases} or \textit{functions} as described in the original Expression Problem.
 
 \begin{description}
-\item[datatypes] For example, if you remove \lstinline{FloatTraining}, \lstinline{FloatLiterals},  \lstinline{FloatWeights}, \lstinline{FloatLayers} and \lstinline{CumulativeFloatLayers} from Listing \ref{hyperparameters1_alternative}, then all types for single precision floating-points, such as  \lstinline{FloatLayer} or \lstinline{FloatWeight} will no longer exist in \lstinline{hyperparameters1}, so do the operations for them.
+\item[data types] For example, if you remove \lstinline{FloatTraining}, \lstinline{FloatLiterals},  \lstinline{FloatWeights}, \lstinline{FloatLayers} and \lstinline{CumulativeFloatLayers} from Listing \ref{hyperparameters1_alternative}, then all types for single precision floating-points, such as  \lstinline{FloatLayer} or \lstinline{FloatWeight} will no longer exist in \lstinline{hyperparameters1}, so do the operations for them.
 \item[cases] However, if you only remove \lstinline{FloatLayers} and {CumulativeFloatLayers} from Listing \ref{hyperparameters1_alternative}, then \lstinline{max}, \lstinline{dot} and other arithmetic operations will no longer exist in \lstinline{hyperparameters1}. Users can also create other \glspl{plug-in} for additional cases, \href{https://gist.github.com/Atry/15b7d9a4c63d95ad3d67e94bf20b4f69#file-readme-ipynb}{Convolutional Operations} for example.
-\item[functions] Most of \glspl{plug-in} are designed for the functionality related to automatically differentiation, however, \lstinline{Names} \gls{plug-in} is not one of them. If you remove \lstinline{Names} from Listing \ref{hyperparameters1_alternative}, then the public methods \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/plugins/Names$Layer.html#name:sourcecode.Name}{\lstinline{name}} and \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/plugins/Names$Layer.html#fullName:sourcecode.FullName}{\lstinline{fullName}} will disappea, while the mechanism of automatically differentiation will still keep working.
+\item[functions] Most of \glspl{plug-in} are designed for the functionality related to automatically differentiation, however, \lstinline{Names} \gls{plug-in} is not one of them. If you remove \lstinline{Names} from Listing \ref{hyperparameters1_alternative}, then the public methods \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/plugins/Names$Layer.html#name:sourcecode.Name}{\lstinline{name}} and \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/plugins/Names$Layer.html#fullName:sourcecode.FullName}{\lstinline{fullName}} will disappear, while the mechanism of automatically differentiation will still keep working.
 \end{description}
 
 \subsubsection{Creating Plug-ins}
@@ -358,7 +358,7 @@ What makes our \gls{plug-in} extraordinary in comparison to original Expression 
 
 \begin{lstlisting}[caption={The implementation of the \lstinline{Adagrad} \Gls{plug-in}}, label={Adagrad}]
 trait Adagrad extends INDArrayWeights {
-  /** The hyperparmaeter `eps`, which should be configured in `Factory.newInstance()` */
+  /** The hyperparameter `eps`, which should be configured in `Factory.newInstance()` */
   def eps: Double
 
   trait INDArrayWeightApi extends super.INDArrayWeightApi { this: INDArrayWeight =>
@@ -392,7 +392,7 @@ The implementation of \lstinline{Adagrad} \gls{plug-in} consists of:
 
 \begin{itemize}
   \item Declaring \lstinline{INDArrayWeights} \gls{plug-in} as a dependency.
-  \item Adding a new hyperparmaeter \lstinline{eps}, which can be configured by a named parameter in \lstinline{Factory.newInstance()}.
+  \item Adding a new hyperparameter \lstinline{eps}, which can be configured by a named parameter in \lstinline{Factory.newInstance()}.
   \item Changing the upper type bound of abstract type \lstinline{INDArrayWeight} to \lstinline{INDArrayWeightApi}.
   \begin{itemize}
     \item Adding a new internal state \lstinline{cache} in \lstinline{INDArrayWeightApi}.
@@ -403,12 +403,9 @@ The implementation of \lstinline{Adagrad} \gls{plug-in} consists of:
   \end{itemize}
 \end{itemize}
 
-Thanks to Scala's Class Linearizion\cite{odersky2017scala} feature, \lstinline{Adagrad} \gls{plug-in} can change the computation of \lstinline{delta} without the knowledge of which \glspl{plug-in} other than \lstinline{Adagrad} are changing \lstinline{delta}, too. This ability is even more extensible than the original Expression Problem\begin{anonsuppress}\cite{yang2017expression}
+Thanks to Scala's Class Linearization\cite{odersky2017scala} feature, \lstinline{Adagrad} \gls{plug-in} can change the computation of \lstinline{delta} without the knowledge of which \glspl{plug-in} other than \lstinline{Adagrad} are changing \lstinline{delta}, too. This ability is even more extensible than the original Expression Problem\begin{anonsuppress}\cite{yang2017expression}
 \end{anonsuppress}
 .
-
-
-
 
 \section{Implementation}
 \subsection{Backpropagation through Monads\label{backpropagation}}

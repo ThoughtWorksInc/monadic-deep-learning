@@ -257,7 +257,7 @@ def parallelByDefault(a: INDArrayLayer, b: INDArrayLayer, c: INDArrayLayer, d: I
 
 By combining both applicative functors and monads, DeepLearning.scala supports dynamic neural network and still allows the independent parts of the neural network to run in parallel. In addition, the backward pass of differentiable functions built from parallel applicative functors or built-in vector binary operators will be executed in parallel, too.
 
-\subsection{Plug-in}
+\subsection{Plug-ins}
 
 \subsubsection{Using Plug-ins}
 
@@ -348,9 +348,13 @@ All those \glspl{plug-in} are optional. They provide either some special \textit
 \item[functions] Most of \glspl{plug-in} are designed for the functionality related to automatically differentiation, however, \lstinline{Names} \gls{plug-in} is not one of them. If you remove \lstinline{Names} from Listing \ref{hyperparameters1_alternative}, then the public methods \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/plugins/Names$Layer.html#name:sourcecode.Name}{\lstinline{name}} and \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/plugins/Names$Layer.html#fullName:sourcecode.FullName}{\lstinline{fullName}} will disappea, while the mechanism of automatically differentiation will still keep working.
 \end{description}
 
-\subsubsection{Creating Plug-in}
+\subsubsection{Creating Plug-ins}
 
-What makes our \gls{plug-in} extraordinary in comparison to original Expression Problem is the ability to modify existing behaviors. Let's see the implementation of \lstinline{Adagrad} \gls{plug-in} as an example\begin{anonsuppress}\footnote{\lstinline{Adagrad} is a non-built-in \gls{plug-in}, which can be found on Github Gist: \url{https://gist.github.com/Atry/89ee1baa4c161b8ccc1b82cdd9c109fe\#file-readme-ipynb}}\end{anonsuppress}:
+What makes our \gls{plug-in} extraordinary in comparison to original Expression Problem is the ability to modify existing behaviors. Let's see the implementation of \lstinline{Adagrad} \gls{plug-in} as an example
+\begin{anonsuppress}
+  \footnote{\lstinline{Adagrad} is a non-built-in \gls{plug-in}, which can be found on Github Gist: \url{https://gist.github.com/Atry/89ee1baa4c161b8ccc1b82cdd9c109fe\#file-readme-ipynb}}
+\end{anonsuppress}
+:
 
 \begin{lstlisting}[caption={The implementation of the \lstinline{Adagrad} \Gls{plug-in}}, label={Adagrad}]
 trait Adagrad extends INDArrayWeights {
@@ -402,6 +406,9 @@ The implementation of \lstinline{Adagrad} \gls{plug-in} consists of:
 Thanks to Scala's Class Linearizion\cite{odersky2017scala} feature, \lstinline{Adagrad} \gls{plug-in} can change the computation of \lstinline{delta} without the knowledge of which \glspl{plug-in} other than \lstinline{Adagrad} are changing \lstinline{delta}, too. This ability is even more extensible than the original Expression Problem\begin{anonsuppress}\cite{yang2017expression}
 \end{anonsuppress}
 .
+
+
+
 
 \section{Implementation}
 \subsection{Backpropagation through Monads\label{backpropagation}}

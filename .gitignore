@@ -14,3 +14,4 @@
 *.pdf
 *.dvi
 *.synctex.gz
+.vscode/

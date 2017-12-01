@@ -333,15 +333,15 @@ Listing \ref{layer2} created the two-layer neural network \lstinline{layer2} tha
 
 \subsubsection{Ad Hoc Polymorphism}
 
-However, the type signature of \lstinline{layer2} seems not very strange. It accepts a \lstinline{hyperparameters1.INDArrayLayer} as input and returns a \lstinline{hyperparameters2.INDArrayLayer}. The type signature means that the previous layer of \lstinline{layer2} must be another layer whose hyperparameters are configured in \lstinline{hyperparameters1}.
+However, the type signature of \lstinline{layer2} seems not very usable. It returns a \lstinline{hyperparameters2.INDArrayLayer} but only accepts a \lstinline{hyperparameters1.INDArrayLayer} as input, which means that the previous layer of \lstinline{layer2} must belong to \lstinline{hyperparameters1}.
 
 Ideally, \lstinline{layer1} and \lstinline{layer2} should be polymorphic differentiable functions, able to accept heterogeneous types of input for better reusability, including:
 
 \begin{itemize}
   
-  \item An ordinary vector input. i.e. \lstinline{INDArray}.
+  \item A vanilla vector input. i.e. \lstinline{INDArray}.
 
-  \item Hidden states produced by any previous neural network layers, regardless of what hyperparameters are configured for those layers. i.e. any \lstinline{INDArrayLayer}s regardless of the prefixes.
+  \item \Glspl{differentiable expression} of hidden states produced by any previous neural network layers, regardless of what hyperparameters are configured for those layers. i.e. any \lstinline{INDArrayLayer}s regardless of the prefixes.
   
   \item \Glspl{trainable variable} in the case of activation maximization technique\cite{erhan2009visualizing}.i.e. any \lstinline{INDArrayWeight}s regardless of the prefixes.
 

@@ -22,7 +22,7 @@ Other deep learning frameworks in Java or Scala (including Scala binding of C++ 
 
 In this paper, we present DeepLearning.scala, which achieves all the above goals, and still get type checked.
 
-\subsection{Basic Concepts\label{concepts}}
+\section{Basic Concepts\label{concepts}}
 
 For example, suppose we are building a robot for answering questions in IQ test like this:
 
@@ -126,7 +126,7 @@ The IQ test robot example shows some basic concepts in DeepLearning.scala.
   \item If a \gls{differentiable function} invokes another \gls{differentiable function}, then \glspl{trainable variable} trained by one \gls{differentiable function} affect another one. For example, when training the \gls{differentiable function} \lstinline{linearRegression}, The \glspl{trainable variable} \lstinline{weights} and \lstinline{bias} are modified, hence \lstinline{guessNextNumber} automatically gains the ability to \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html\#predict(differentiable:Differentiable):com.thoughtworks.future.Future[DeepLearning.this.Data]}{\lstinline{predict}} correct answers.
 \end{itemize}
 
-\subsection{Dynamic Neural Networks}
+\section{Dynamic Neural Networks}
 
 DeepLearning.scala supports dynamic neural network. It means that the control flow of a neural network can differ according to its internal intermediate state when processing a special input. Especially, the ability to conditional enabling a sub-neural network is a crucial feature to build outrageously large neural networks\cite{shazeer2017outrageously}.
 
@@ -162,7 +162,7 @@ The control flow of gated network that we want to build is described in pseudo-c
 
 In DeepLearning.scala, there are three different approaches to implement the gated network. Examples of these approaches are introduced in following section \ref{eager}, \ref{monadic}, and \ref{applicative}.
 
-\subsubsection{Eager Execution (bad)\label{eager}}
+\subsection{Eager Execution (bad)\label{eager}}
 
 An obvious approach (Listing \ref{naiveGatedNet}) to create the gated network is eagerly executing the \lstinline{gate}.
 
@@ -185,9 +185,9 @@ In DeepLearning.scala, all differentiable expressions, including the scalar \lst
 
 So, the two calls to the \lstinline{predict} method in the \lstinline{if} will execute the computational graph of \lstinline{gate} twice. Also \lstinline{naiveGatedNet} itself is a computational graph. There will be a \lstinline{predict} or \lstinline{train} call on \lstinline{naiveGatedNet} from user in the future, which will execute the computational graph one more time. But what's even worse is, \lstinline{input} is a computational graph, too. Along with \lstinline{gate}, it will be evaluated three times, which may contain complex future extracting process.
 
-\subsubsection{Monadic Control Flow (good)\label{monadic}}
+\subsection{Monadic Control Flow (good)\label{monadic}}
 
-Ideally, the calls to \lstinline{predict} should be avoided in differentiable functions. The recommended approach to create a dynamic neural network is using \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html\#forward(differentiable:Differentiable):com.thoughtworks.raii.asynchronous.Do[com.thoughtworks.deeplearning.DeepLearning.Tape[DeepLearning.this.Data,DeepLearning.this.Delta]]}{\lstinline{forward}}, which returns a monadic value of \lstinline{Do[Tape[Data, Delta]]}, which can be used in a monadic control flow via Scalaz\cite{kenji2017scalaz}'s type classes\cite{oliveira2010type}.
+Ideally, the calls to \lstinline{predict} should be avoided in differentiable functions. The recommended approach to create a dynamic neural network is using \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html\#forward(differentiable:Differentiable):com.thoughtworks.raii.asynchronous.Do[com.thoughtworks.deeplearning.DeepLearning.Tape[DeepLearning.this.Data,DeepLearning.this.Delta]]}{\lstinline{forward}}, which returns a monadic value of \lstinline{Do[Tape[Data, Delta]]}, which can be used in a monadic control flow via Scalaz\cite{kenji2017scalaz}'s type classes\cite{oliveira2010type} \lstinline{Monad} and \lstinline{Applicative}.
 
 Listing \ref{monadicGatedNet} shows the monadic control flow of gated network.
 
@@ -216,7 +216,7 @@ The \lstinline{monadicGatedNet} represents a dynamic neural network, since each 
 However, \lstinline{flatMap} prevents additional optimization, too.
 \lstinline{scores._2.forward} have to wait for \lstinline{scores._1.forward}'s result, even if the two operations are logically independent.
 
-\subsubsection{Parallel Applicative Control Flow + Sequential Monadic Control Flow (best)\label{applicative}}
+\subsection{Parallel Applicative Control Flow + Sequential Monadic Control Flow (best)\label{applicative}}
 
 Ideally, the independent operations \lstinline{scores._1.forward} and \lstinline{scores._2.forward} should run in parallel. This can be done by tagging \lstinline{Do} as \href{https://javadoc.io/page/org.scalaz/scalaz_2.11/latest/scalaz/Tags$$Parallel.html}{\lstinline{Parallel}}, and use \href{https://javadoc.io/page/org.scalaz/scalaz_2.11/latest/scalaz/Applicative.htm\l#tuple2[A,B](fa:=>F[A],fb:=>F[B]):F[(A,B)]}{\lstinline{scalaz.Applicative.tuple2}} instead of \lstinline{flatMap} (Listing \ref{applicativeMonadicGatedNet}).
 
@@ -257,9 +257,9 @@ def parallelByDefault(a: INDArrayLayer, b: INDArrayLayer, c: INDArrayLayer, d: I
 
 By combining both applicative functors and monads, DeepLearning.scala supports dynamic neural network and still allows the independent parts of the neural network to run in parallel. In addition, the backward pass of differentiable functions built from parallel applicative functors or built-in vector binary operators will be executed in parallel, too.
 
-\subsection{Plug-ins}
+\section{Hyperparameters}
 
-\subsubsection{Using Plug-ins}
+\subsection{Configuring Hyperparameters with Plug-ins}
 
 Nowadays neural networks contain hyperparameters specified by human. In DeepLearning.scala, those hyperparameters are configured as named parameters provided by \glspl{plug-in}.
 
@@ -295,6 +295,8 @@ def layer1(input: INDArrayLayer): INDArrayLayer = {
 
 Differentiable functions \lstinline{max} and \lstinline{dot} used in \lstinline{layer1} is also defined inside \lstinline{hyperparameters1}, hence the \lstinline{import} statements for them are necessary.
 
+\subsection{Heterogeneous Hyperparameters}
+
 DeepLearning.scala allows \glspl{differentiable expression} that belong to one hyperparameter configuration to work together with \glspl{differentiable expression} that belong to another hyperparameter configuration. 
 
 \begin{lstlisting}[caption={Hyperparameters for Adagrad}, label={hyperparameters2}]
@@ -308,7 +310,7 @@ val hyperparameters2 = Factory[Builtins with Adagrad with FixedLearningRate].new
 val weight2 = hyperparameters2.INDArrayWeight(Nd4j.randn(10, 10))
 \end{lstlisting}
 
-\begin{lstlisting}[caption={A two layer neural network built from heterogeneous hyperparameters}, label={layer2}]
+\begin{lstlisting}[caption={A two-layer neural network built from heterogeneous hyperparameters}, label={layer2}]
 def layer2(input: hyperparameters1.INDArrayLayer): hyperparameters2.INDArrayLayer = {
   import hyperparameters2.implicits._
   import hyperparameters2.max
@@ -322,12 +324,69 @@ def layer2(input: hyperparameters1.INDArrayLayer): hyperparameters2.INDArrayLaye
 }
 \end{lstlisting}
 
-Listing \ref{layer2} created a two layer neural network that has heterogeneous hyperparameters for each layer:
+Listing \ref{layer2} created the two-layer neural network \lstinline{layer2} that has heterogeneous hyperparameters for each layer:
 
 \begin{itemize}
   \item \lstinline{weight1} is optimized by ordinary gradient descent with a fixed learning rate 0.1;
   \item \lstinline{weight2} is optimized by Adagrad\cite{duchi2011adaptive} with an initial learning rate 0.002.
 \end{itemize}
+
+\subsubsection{Ad Hoc Polymorphism}
+
+However, the type signature of \lstinline{layer2} seems not very strange. It accepts a \lstinline{hyperparameters1.INDArrayLayer} as input and returns a \lstinline{hyperparameters2.INDArrayLayer}. The type signature means that the previous layer of \lstinline{layer2} must be another layer whose hyperparameters are configured in \lstinline{hyperparameters1}.
+
+Ideally, \lstinline{layer1} and \lstinline{layer2} should be polymorphic differentiable functions, able to accept heterogeneous types of input for better reusability, including:
+
+\begin{itemize}
+  
+  \item An ordinary vector input. i.e. \lstinline{INDArray}.
+
+  \item Hidden states produced by any previous neural network layers, regardless of what hyperparameters are configured for those layers. i.e. any \lstinline{INDArrayLayer}s regardless of the prefixes.
+  
+  \item \Glspl{trainable variable} in the case of generative neural network like DeepDream\cite{mordvintsev2015deepdream}.i.e. any \lstinline{INDArrayWeight}s regardless of the prefixes.
+
+\end{itemize}
+
+We provide a dependent-type type class\cite{gurnelltype} \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html}{\lstinline{DeepLearning}} that witnesses any supported expressions including \glspl{differentiable expression}, \glspl{trainable variable}, or vanilla non-differentiable types. The users can create type aliases to restrict the types of state during forward pass and backward pass by refining  as shown in Listing \ref{INDArrayDeepLearning}.
+
+\begin{lstlisting}[caption={A type class alias that witnesses dense vector expressions}, label={INDArrayDeepLearning}]
+type INDArrayExpression[Expression] = DeepLearning[Expression] {
+  /** The type of result calculated during forward pass */
+  type Data = INDArray
+
+  /** The type of derivative during backward pass */
+  type Delta = INDArray
+}
+\end{lstlisting}
+
+
+
+By using \lstinline{INDArrayExpression} as a context bound, \lstinline{layer1} and \lstinline{layer2} can accept any vector expression as shown in Listing \ref{polyLayer2}.
+
+\begin{lstlisting}[caption={Polymorphic two-layer neural network}, label={polyLayer2}]
+def polyLayer1[Input: INDArrayExpression](input: Input): hyperparameters1.INDArrayLayer = {
+  import hyperparameters1.implicits._
+  import hyperparameters1.max
+  max(input.dot(weight1), 0.0)
+}
+
+def polyLayer2[Input: INDArrayExpression](input: Input): hyperparameters2.INDArrayLayer = {
+  import hyperparameters2.implicits._
+  import hyperparameters2.max
+  import hyperparameters1.implicits.{layerDeepLearning => layerDeepLearning1}
+  max(polyLayer1(input).dot(weight2), 0.0)
+}
+\end{lstlisting}
+
+Built-in operations like \lstinline{max} and \lstinline{dot} can be used as before, because all built-in operations are polymorphic, too.
+
+With the help of \lstinline{DeepLearning} type class, we created a two-layer neural network \lstinline{polyLayer2} that
+\begin{enumerate*}
+  \item has heterogeneous hyperparameters, and
+  \item accepts polymorphic types of input. 
+\end{enumerate*}
+
+\subsection{Built-in Plug-ins at a Glance}
 
 DeepLearning.scala's \gls{plug-in} mechanism is a solution to the well known Expression Problem, whose goal is to define a datatype by cases, where one can add new cases to the datatype and new functions over the datatype, without recompiling existing code, and while retaining static type safety (e.g., no casts)\cite{wadler1998expression}.
 
@@ -348,7 +407,8 @@ All those \glspl{plug-in} are optional. They provide either some special \textit
 \item[functions] Most of \glspl{plug-in} are designed for the functionality related to automatically differentiation, however, \lstinline{Names} \gls{plug-in} is not one of them. If you remove \lstinline{Names} from Listing \ref{hyperparameters1_alternative}, then the public methods \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/plugins/Names$Layer.html#name:sourcecode.Name}{\lstinline{name}} and \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/plugins/Names$Layer.html#fullName:sourcecode.FullName}{\lstinline{fullName}} will disappear, while the mechanism of automatically differentiation will still keep working.
 \end{description}
 
-\subsubsection{Creating Plug-ins}
+
+\subsection{Creating Plug-ins}
 
 What makes our \gls{plug-in} extraordinary in comparison to original Expression Problem is the ability to modify existing behaviors. Let's see the implementation of \lstinline{Adagrad} \gls{plug-in} as an example
 \begin{anonsuppress}
@@ -356,7 +416,7 @@ What makes our \gls{plug-in} extraordinary in comparison to original Expression 
 \end{anonsuppress}
 :
 
-\begin{lstlisting}[caption={The implementation of the \lstinline{Adagrad} \Gls{plug-in}}, label={Adagrad}]
+\begin{lstlisting}[caption={The implementation of the \lstinline{Adagrad} \gls{plug-in}}, label={Adagrad}]
 trait Adagrad extends INDArrayWeights {
   /** The hyperparameter `eps`, which should be configured in `Factory.newInstance()` */
   def eps: Double
@@ -391,7 +451,7 @@ trait Adagrad extends INDArrayWeights {
 The implementation of \lstinline{Adagrad} \gls{plug-in} consists of:
 
 \begin{itemize}
-  \item Declaring \lstinline{INDArrayWeights} \gls{plug-in} as a dependency.
+  \item Declaring the \lstinline{INDArrayWeights} \gls{plug-in} as a dependency.
   \item Adding a new hyperparameter \lstinline{eps}, which can be configured by a named parameter in \lstinline{Factory.newInstance()}.
   \item Changing the upper type bound of abstract type \lstinline{INDArrayWeight} to \lstinline{INDArrayWeightApi}.
   \begin{itemize}
@@ -407,10 +467,12 @@ Thanks to Scala's Class Linearization\cite{odersky2017scala} feature, \lstinline
 \end{anonsuppress}
 .
 
-\section{Implementation}
-\subsection{Backpropagation through Monads\label{backpropagation}}
+
+
+\section{Backpropagation through Monads\label{backpropagation}}
 % TODO:
 \section{Conclusion}
+\subsection{Future Work}
 
 \clearpage
 % Appendix

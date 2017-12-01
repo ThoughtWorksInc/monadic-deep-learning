@@ -1,40 +1,16 @@
-%%%% Small single column format, used for CIE, CSUR, JACM, JDIQ, JEA, JERIC, JETC, TAAS, TACCESS, TACO, TALG, TALLIP (formerly TALIP), TCPS, TEAC, TECS, THRI, TIIS, TISSEC, TIST, TKDD, TMIS, TOCE, TOCHI, TOCL, TOCS, TOCT, TODAES, TODS, TOIS, TOIT, TOMACS, TOMM (formerly TOMCCAP), TOMPECS, TOMS, TOPC, TOPLAS, TOPS, TOS, TOSEM, TOSN, TRETS, TSAS, TSC, TSLP, TWEB.
-% \documentclass[format=acmsmall, review=false, screen=true]{acmart}
-
-%%%% Large single column format, used for IMWUT, JOCCH, PACMPL, POMACS, TAP, PACMHCI
-% \documentclass[acmlarge]{acmart}
-
-%%%% Large double column format, used for TOG
-% \documentclass[acmtog, authorversion]{acmart}
-
-%%%% Generic manuscript mode
-% \documentclass[manuscript,review,screen]{acmart}
-
 %% For double-blind review submission, w/o CCS and ACM Reference (max submission space)
-\documentclass[acmsmall,10pt,review,screen,anonymous]{acmart}\settopmatter{printfolios=true,printccs=false,printacmref=false}
-%% For double-blind review submission, w/ CCS and ACM Reference
-%\documentclass[sigplan,10pt,review,anonymous]{acmart}\settopmatter{printfolios=true}
-%% For single-blind review submission, w/o CCS and ACM Reference (max submission space)
-%\documentclass[sigplan,10pt,review]{acmart}\settopmatter{printfolios=true,printccs=false,printacmref=false}
-%% For single-blind review submission, w/ CCS and ACM Reference
-%\documentclass[sigplan,10pt,review]{acmart}\settopmatter{printfolios=true}
-%% For final camera-ready submission, w/ required CCS and ACM Reference
-%\documentclass[sigplan,10pt]{acmart}\settopmatter{}
+\documentclass[acmsmall,10pt,review,screen,anonymous]{acmart}
+\settopmatter{printfolios=true,printccs=false,printacmref=false}
+
 
 %\setcitestyle{super,sort&compress}
 \bibliographystyle{ACM-Reference-Format}
 \citestyle{acmauthoryear}
 
-\usepackage{booktabs} % For formal tables
+% \usepackage{booktabs} % For formal tables
 
 \usepackage[ruled]{algorithm2e} % For algorithms
 
-% Workaround for https://tex.stackexchange.com/questions/341969/non-discriptive-error-when-combining-minted-and-libertine
-% \makeatletter
-% \def\mdseries@tt{m}
-% \makeatother
-% \usepackage{minted}
-% \usepackage{fancyvrb}
 \usepackage{listings}
 \lstset{
   language=Scala,
@@ -50,12 +26,7 @@
 %   frame=leftline,
 }
 
-% \usepackage{titlesec}
-% \titleformat{\subsubsection}
-%   {\normalfont\normalsize\itshape}{\thesubsubsection}{1em}{}
-% \titlespacing*{\subsubsection}{0pt}{3.25ex plus 1ex minus .2ex}{0ex plus .2ex}
-
-\usepackage{markdown}
+% \usepackage{markdown}
 
 \usepackage{color}
 \usepackage{graphviz}
@@ -86,27 +57,20 @@
 }
 
 % Metadata Information
-\acmJournal{PACMPL}
+% \acmJournal{PACMPL}
 % \acmVolume{9}
 % \acmNumber{4}
 % \acmArticle{39}
 % \acmYear{2010}
 % \acmMonth{3}
 
-%\acmBadgeL[http://ctuning.org/ae/ppopp2016.html]{ae-logo}
-%\acmBadgeR[http://ctuning.org/ae/ppopp2016.html]{ae-logo}
-
 % Copyright
 % \setcopyright{acmcopyright}
 \setcopyright{acmlicensed}
-%\setcopyright{rightsretained}
-%\setcopyright{usgov}
-%\setcopyright{usgovmixed}
-%\setcopyright{cagov}
-%\setcopyright{cagovmixed}
+% \setcopyright{rightsretained}
 
 % DOI
-\acmDOI{0000001.0000001}
+% \acmDOI{0000001.0000001}
 
 
 % Document starts
@@ -118,7 +82,7 @@
 %  \subtitlenote{Subtitle note}
 
 \author{Yang, Bo}
-% \orcid{1234-5678-9012-3456}
+\orcid{0000-0003-2757-9115}
 \affiliation{%
   \institution{ThoughtWorks, Inc}
 %   \streetaddress{104 Jamestown Rd}
@@ -146,8 +110,6 @@
  \state{Washington}
  \country{USA}}
 \email{lolisa@marisa.moe}
-
-% \renewcommand\shortauthors{Zhou, G. et al}
 
 \begin{abstract}
 The Java and Scala community built a very successful big data ecosystem, however, most of neural networks running on it are modeled in dynamically typed programming languages. Dynamically typed deep learning frameworks treat neural networks as differentiable expressions that contain many trainable variables, and perform automatic differentiation on those expressions when training them.
@@ -185,14 +147,14 @@ Together of these features, users of DeepLearning.scala are able to create compl
 <concept_significance>500</concept_significance>
 </concept>
 <concept>
-<concept_id>10011007.10011006.10011008.10011009.10011012</concept_id>
-<concept_desc>Software and its engineering~Functional languages</concept_desc>
-<concept_significance>300</concept_significance>
-</concept>
-<concept>
 <concept_id>10011007.10011006.10011008.10011009.10011021</concept_id>
 <concept_desc>Software and its engineering~Multiparadigm languages</concept_desc>
 <concept_significance>500</concept_significance>
+</concept>
+<concept>
+<concept_id>10011007.10011006.10011008.10011009.10011012</concept_id>
+<concept_desc>Software and its engineering~Functional languages</concept_desc>
+<concept_significance>300</concept_significance>
 </concept>
 <concept>
 <concept_id>10011007.10011006.10011008.10011009.10011011</concept_id>
@@ -249,7 +211,7 @@ Together of these features, users of DeepLearning.scala are able to create compl
 %
 
 
-\keywords{neural networks, type class, path-dependent type, monad, expression problem, scala}
+\keywords{type class, path-dependent type, monad, expression problem, scala}
 
 
 

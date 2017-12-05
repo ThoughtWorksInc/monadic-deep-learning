@@ -1,4 +1,4 @@
-\section{Introduction}
+\section{Introduction \label{introduction}}
 
 Backpropagation\cite{rumelhart1985learning} is the key feature in many deep learning frameworks. Combining with other optimization algorithms\cite{kingma2014adam, zeiler2012adadelta,duchi2011adaptive}, deep learning frameworks change the values of trainable variables in neural networks during iterations, producing a model of knowledge learnt from training data.
 
@@ -10,7 +10,7 @@ Backpropagation can be seen as a special-purpose automatic differentiation\cite{
 
   \item[Multiple trainable variable] Neural networks are composed of multiple layers. Each layer contains their own trainable variables. All these deep learning frameworks are able to calculus the derivatives of all trainable variables at once for one training data batch.
 
-  \item[Internal DSL\cite{fowler2010domain}] All these deep learning frameworks provide an Internal DSL, allowing users to create their differentiable functions in Python or Lua from the similar expression as creating ordinary non-differentiable functions, and integrate into a larger application alone with higher-level configurations\cite{chollet2015keras} or ETL (Extract, Transform and Load) process.
+  \item[Internal DSL\cite{fowler2010domain}] All these deep learning frameworks are libraries that provide an Internal DSL, allowing users to create their differentiable functions in Python or Lua from the similar expression as creating ordinary non-differentiable functions. Since these frameworks do not require external language, models created by them can be easy integrated into a larger application alone with higher-level configurations\cite{chollet2015keras} or ETL (Extract, Transform and Load) process.
 
 \end{description}
 
@@ -402,9 +402,13 @@ val hyperparameters1 = Factory[ImplicitsSingleton with Layers with Weights with 
 All those \glspl{plug-in} are optional. They provide either some special \textit{data types}, \textit{cases} or \textit{functions} as described in the original Expression Problem.
 
 \begin{description}
-\item[data types] For example, if you remove \lstinline{FloatTraining}, \lstinline{FloatLiterals},  \lstinline{FloatWeights}, \lstinline{FloatLayers} and \lstinline{CumulativeFloatLayers} from Listing \ref{hyperparameters1_alternative}, then all types for single precision floating-points, such as  \lstinline{FloatLayer} or \lstinline{FloatWeight} will no longer exist in \lstinline{hyperparameters1}, so do the operations for them.
-\item[cases] However, if you only remove \lstinline{FloatLayers} and {CumulativeFloatLayers} from Listing \ref{hyperparameters1_alternative}, then \lstinline{max}, \lstinline{dot} and other arithmetic operations will no longer exist in \lstinline{hyperparameters1}. Users can also create other \glspl{plug-in} for additional cases, \href{https://gist.github.com/Atry/15b7d9a4c63d95ad3d67e94bf20b4f69#file-readme-ipynb}{Convolutional Operations} for example.
-\item[functions] Most of \glspl{plug-in} are designed for the functionality related to automatically differentiation, however, \lstinline{Names} \gls{plug-in} is not one of them. If you remove \lstinline{Names} from Listing \ref{hyperparameters1_alternative}, then the public methods \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/plugins/Names$Layer.html#name:sourcecode.Name}{\lstinline{name}} and \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/plugins/Names$Layer.html#fullName:sourcecode.FullName}{\lstinline{fullName}} will disappear, while the mechanism of automatically differentiation will still keep working.
+  
+  \item[data types] For example, if you remove \lstinline{FloatTraining}, \lstinline{FloatLiterals},  \lstinline{FloatWeights}, \lstinline{FloatLayers} and \lstinline{CumulativeFloatLayers} from Listing \ref{hyperparameters1_alternative}, then all types for single precision floating-points, such as  \lstinline{FloatLayer} or \lstinline{FloatWeight} will no longer exist in \lstinline{hyperparameters1}, so do the operations for them.
+
+  \item[cases] However, if you only remove \lstinline{FloatLayers} and {CumulativeFloatLayers} from Listing \ref{hyperparameters1_alternative}, then \lstinline{max}, \lstinline{dot} and other arithmetic operations will no longer exist in \lstinline{hyperparameters1}. Users can also create other \glspl{plug-in} for additional cases, \href{https://gist.github.com/Atry/15b7d9a4c63d95ad3d67e94bf20b4f69#file-readme-ipynb}{Convolutional Operations} for example.
+  
+  \item[functions] Most of \glspl{plug-in} are designed for the functionality related to automatically differentiation, however, \lstinline{Names} \gls{plug-in} is not one of them. If you remove \lstinline{Names} from Listing \ref{hyperparameters1_alternative}, then the public methods \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/plugins/Names$Layer.html#name:sourcecode.Name}{\lstinline{name}} and \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/plugins/Names$Layer.html#fullName:sourcecode.FullName}{\lstinline{fullName}} will disappear, while the mechanism of automatically differentiation will still keep working.
+
 \end{description}
 
 
@@ -467,9 +471,110 @@ Thanks to Scala's Class Linearization\cite{odersky2017scala} feature, \lstinline
 \end{anonsuppress}
 .
 
-
-
 \section{Backpropagation through Monads\label{backpropagation}}
+
+Automatic differentiation in a functional framework were considered impossible to be implemented as a library without the ability to reflectively access and
+transform expressions associated with closures\cite{pearlmutter2008reverse}. For example, if you want to create a \lstinline{transform} function that returns the derivative for given function \lstinline{f}:
+
+\begin{lstlisting}[caption={Impossible Transform Function for Automatic Differentiation}, label={transform}]
+def transform(f: Double => Double): Double => Double
+\end{lstlisting}
+
+Obviously this \lstinline{transform} function is impossible without the knowledge of the implementation of \lstinline{f}.
+
+Fortunately, in a statically typed language, for type safety, the differentiable types and non-differentiable types should differ. The type signature of our automatic differentiation primitive can be written as Listing \ref{typeSafeTransform}:
+
+\begin{lstlisting}[caption={Type Safe Transform Function for Automatic Differentiation}, label={typeSafeTransform}]
+  def typeSafeTransform(differentiableFunction: Double => DoubleLayer) = { input: Double =>
+  val tape = differentiableFunction(input).forward
+  tape.backward(Do.now(1.0))
+}
+\end{lstlisting}
+
+Unlike \cite{pearlmutter2008reverse}'s compiler primitive $\overleftarrow{J}$, our \lstinline{typeSafeTransform} can use the additional information stored on \lstinline{DoubleLayer}. As a result, our \lstinline{typeSafeTransform} can be implemented as an ordinary Scala function instead of macros.
+
+The remainder of Section \ref{backpropagation} is organized as follows.
+% TODO:
+
+\subsection{Multiple Trainable Variables}
+
+Our approach for reverse mode AD use a data structure similar to traditional forward mode AD, with only a little change.
+
+Forward mode AD can be viewed as computation on dual number. For example, dual number for scalar types can be implemented as Listing \ref{DualNumber}:
+
+\begin{lstlisting}[caption={Dual number for forward mode AD}, label={DualNumber}]
+type Data = Double
+type PartialDelta = Double
+case class DualNumber(data: Data, delta: PartialDelta)
+\end{lstlisting}
+
+Arithmetic operations on those dual number can be implemented as Listing \ref{dualArithmetic}:
+
+\begin{lstlisting}[caption={Arithmetic operations on dual number}, label={dualArithmetic}]
+object DualNumber {
+  def plus(left: DualNumber, right: DualNumber): DualNumber = {
+    DualNumber(left.data + right.data, left.delta + right.delta)
+  }
+  def multiply(left: DualNumber, right: DualNumber): DualNumber = {
+    DualNumber(left.data * right.data, left.data * right.delta + right.data * left.delta)
+  }
+}
+\end{lstlisting}
+
+However, this approach is hard to type-check if we want to support multiple  \glspl{trainable variable}. \lstinline{PartialDelta} in Listing \ref{DualNumber} represents the partial derivative of \glspl{trainable variable}. In AD tools that support only one \gls{trainable variable}, the \gls{trainable variable} is usually forced to be the input. Hence \lstinline{PartialDelta} is the input type for those AD tools. This assumption is broken for our case, since our delta type of a specific \lstinline{DualNumber} must contain derivatives for all \glspl{trainable variable} that were used to produce the \lstinline{DualNumber}, not only the partial derivative of input. As a result, the type of delta varies when the number of \glspl{trainable variable} grows.
+
+To type-check the delta, considering the only usage of the delta in a neural network is updating \glspl{trainable variable} in a gradient descent based optimization algorithm. We can replace \lstinline{PartialDelta} to a \lstinline{UpdateWeights} closure.
+
+\begin{lstlisting}[caption={Replacing \lstinline{PartialDelta} to a closure}, label={class ClosureBasedDualNumber}]
+type Data = Double  
+case class ClosureBasedDualNumber(data: Data, delta: UpdateWeights)
+\end{lstlisting}
+
+\lstinline{UpdateWeights} in Listing \ref{class ClosureBasedDualNumber} is a function type that contains side-effects to update \glspl{trainable variable}. In order to implement arithmetic operations for the new dual number, the operations on \lstinline{PartialDelta} should be replaced to custom functions for \lstinline{UpdateWeights} (Listing \ref{object ClosureBasedDualNumber}):
+
+\begin{lstlisting}[caption={Replacing operations on \lstinline{PartialDelta} to custom functions for \lstinline{UpdateWeights}}, label={object ClosureBasedDualNumber}]  
+
+object ClosureBasedDualNumber {
+  def plus(left: ClosureBasedDualNumber, right: ClosureBasedDualNumber): ClosureBasedDualNumber = {
+    ClosureBasedDualNumber(left.data + right.data, UpdateWeights.plus(left.delta, right.delta))
+  }
+  def multiply(left: ClosureBasedDualNumber, right: ClosureBasedDualNumber): ClosureBasedDualNumber = {
+    ClosureBasedDualNumber(
+      left.data * right.data,
+      UpdateWeights.multiply(left.data, right.delta) + UpdateWeights.multiply(right.data, left.delta))
+  }
+}
+\end{lstlisting}
+
+
+Mathematically, the \lstinline{UpdateWeights} type in a dual number can be any vector space, i.e. the \lstinline{UpdateWeights} closure itself must support addition and scalar multiplication operations(Listing \ref{UpdateWeights}).
+
+\begin{lstlisting}[caption={Arithmetic operations for the closure that contains side-effects}, label={UpdateWeights}, escapeinside={(*}{*)}]
+type UpdateWeights = Double => SideEffects
+object UpdateWeights {
+  /**(* $(f_0 + f_1)(x) = f_0(x) + f_1(x)$ *)*/
+  def plus(f0: UpdateWeights, f1: UpdateWeights) = { x: Double =>
+    f0(x) |+| f1(x)
+  }
+
+  /**(* $(x_0f)(x_1) = f(x_0x_1)$ *)*/
+  def multiply(x0: Double, f: UpdateWeights) = { x1: Double =>
+    f(x0 * x1)
+  }
+}
+\end{lstlisting}
+
+\lstinline{UpdateWeights}, as a replacement to original \lstinline{PartialDelta}, is a closure able to update derivatives for all weight with a coefficient (the \lstinline{Double} parameter).
+\lstinline{|+|} is the \lstinline{append} operation of \lstinline{scala.Semigroup}, which could be any cumulative data type. In DeepLearning.scala, our \lstinline{SideEffects} is based on the asynchronous operation \lstinline{UnitContinuation}\footnote{\lstinline{UnitContinuation[A]} is an opaque alias\cite{erik2017opaque} of \lstinline{(A => Trampoline[Unit]) => Trampoline[Unit]}, implemented as a separate library at \url{https://github.com/ThoughtWorksInc/future.scala}. In DeepLearning.scala it is used as a monadic data type for encapsulating side effects in stack-safe asynchronous programming.}.
+
+\begin{lstlisting}[caption={Monadic side-effects}, label={SideEffects}]
+type SideEffects = UnitContinuation[Unit]
+\end{lstlisting}
+
+The \lstinline{SideEffects} for neural networks conform associative law because the side effects are just updating \glspl{trainable variable}. Thus, our \lstinline{UpdateWeights.plus} and \lstinline{UpdateWeights.multiply} are equivalent to the operations on strictly evaluated scalar value \lstinline{PartialDelta} in forward mode AD.
+
+
+
 % TODO:
 \section{Conclusion}
 \subsection{Future Work}

@@ -15,3 +15,4 @@
 *.dvi
 *.synctex.gz
 .vscode/
+.venv/

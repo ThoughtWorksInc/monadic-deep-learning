@@ -573,6 +573,80 @@ type SideEffects = UnitContinuation[Unit]
 
 The \lstinline{SideEffects} for neural networks conform associative law because the side effects are just updating \glspl{trainable variable}. Thus, our \lstinline{UpdateWeights.plus} and \lstinline{UpdateWeights.multiply} are equivalent to the operations on strictly evaluated scalar value \lstinline{PartialDelta} in forward mode AD.
 
+\subsection{Diamond Dependencies in Differentiable Expressions}
+
+Although the closured-based dual number approach from Listing \ref{class ClosureBasedDualNumber} to \ref{SideEffects} supports multiple \glspl{trainable variable}, the closure-based computation has a performance issue in the case of diamond dependencies.
+
+\begin{lstlisting}[caption={Monadic side-effects}, label={y1}]  
+var weight: Double = math.random
+val learningRate = 0.001
+
+def readWeight() = ClosureBasedDualNumber(weight, { delta =>
+  weight -= learningRate * delta
+})
+
+val w = readWeight()
+val y0 = ClosureBasedDualNumber.multiply(w, w)
+val y1 = ClosureBasedDualNumber.multiply(y0, y0)
+\end{lstlisting}
+
+\begin{figure}
+
+  \begin{dot2tex}[dot,mathmode]
+  digraph G {
+    node [shape="circle"]
+    rankdir=RL
+    y_0->w
+    y_0->w
+    y_1->y_0
+    y_1->y_0
+  }
+  \end{dot2tex}
+    
+  \caption{Code before preprocessing.}
+  \label{fig:one}
+\end{figure}
+
+xxx
+ff
+ddd
+
+% returns the side-effects for updating weights according to a coefficient that 
+
+
+% Those arithmetic operations can be implemented if \lstinline{UpdateWeights} has an additional parameter:
+
+ 
+% There are two ways to understand \lstinline{UpdateWeights.plus} and \lstinline{UpdateWeights.multiply} in Listing \ref{UpdateWeights}.
+
+% \begin{enumerate}
+%   \item
+  
+%   \item  
+% \end{enumerate}
+ 
+
+
+
+% we don't need 
+% In order to type-check the \lstinline{PartialDelta}, we 
+
+% Our approach is 
+
+
+% \begin{lstlisting}
+% case class Tape[Data, PartialDelta](data: Data, backward: PartialDelta => Patch)
+% \end{lstlisting}
+
+
+% As we discussed in Section \ref{introduction}, automatic differentiation algorithms for neural network should support multiple \glspl{trainable variable}. That means our automatic differentiation primitive should return a function that computes all derivatives referenced by \lstinline{differentiableFunction}, instead of the derivative for input.
+
+% % our automatic differentiation primitive
+
+% Hence, Listing \ref{typeSafeTransform} is not enough. We have to change the type signature of our automatic differentiation primitive to:
+
+
+% differentiableFunction
 
 
 % TODO:

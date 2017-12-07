@@ -1,8 +1,8 @@
 \section{Introduction \label{introduction}}
 
-Backpropagation\cite{rumelhart1985learning} is the key feature in many deep learning frameworks. Combining with other optimization algorithms\cite{kingma2014adam, zeiler2012adadelta,duchi2011adaptive}, deep learning frameworks change the values of trainable variables in neural networks during iterations, producing a model of knowledge learnt from training data.
+Backpropagation \cite{rumelhart1985learning} is the key feature in many deep learning frameworks. Combining with other optimization algorithms \cite{kingma2014adam, zeiler2012adadelta,duchi2011adaptive}, deep learning frameworks change the values of trainable variables in neural networks during iterations, producing a model of knowledge learnt from training data.
 
-Backpropagation can be seen as a special-purpose automatic differentiation\cite{baydin2015automatic}. Many successful Python or Lua deep learning frameworks\cite{collobert2008torch,bergstra2010theano,tokui2015chainer,google2017eager,paszke2017pytorch} implement a common set of features of auto differentiation:
+Backpropagation can be seen as a special-purpose Automatic Differentiation (AD) \cite{baydin2015automatic}. Many successful Python or Lua deep learning frameworks \cite{collobert2008torch,bergstra2010theano,tokui2015chainer,google2017eager,paszke2017pytorch} implement a common set of features of auto differentiation:
 
 \begin{description}
 
@@ -10,15 +10,15 @@ Backpropagation can be seen as a special-purpose automatic differentiation\cite{
 
   \item[Multiple trainable variable] Neural networks are composed of multiple layers. Each layer contains their own trainable variables. All these deep learning frameworks are able to calculus the derivatives of all trainable variables at once for one training data batch.
 
-  \item[Internal DSL\cite{fowler2010domain}] All these deep learning frameworks are libraries that provide an Internal DSL, allowing users to create their differentiable functions in Python or Lua from the similar expression as creating ordinary non-differentiable functions. Since these frameworks do not require external language, models created by them can be easy integrated into a larger application alone with higher-level configurations\cite{chollet2015keras} or ETL (Extract, Transform and Load) process.
+  \item[Internal DSL \cite{fowler2010domain}] All these deep learning frameworks are libraries that provide an Internal DSL, allowing users to create their differentiable functions in Python or Lua from the similar expression as creating ordinary non-differentiable functions. Since these frameworks do not require external language, models created by them can be easy integrated into a larger application alone with higher-level configurations \cite{chollet2015keras} or ETL (Extract, Transform and Load) process.
 
 \end{description}
 
 Unfortunately, deep learning frameworks in statically typed languages have not achieved the above goals until 2017.
 
-Several automatic differentiation libraries\cite{bischof1992adifor,griewank1996algorithm,TapenadeRef13,baydin2015diffsharp} written in Fortran, C++ or F\# support internal DSL via operator overloading but do not support multiple trainable variables.
+Several automatic differentiation libraries \cite{bischof1992adifor,griewank1996algorithm,TapenadeRef13,baydin2015diffsharp} written in Fortran, C++ or F\# support internal DSL via operator overloading but do not support multiple trainable variables.
 
-Other deep learning frameworks in Java or Scala (including Scala binding of C++ frameworks)\cite{intel2016bigdl,skymind2017deeplearning4j,baydin2016hype,chen2017typesafe} do not support automatic differentiation, instead, they only provide their high level computational graph APIs to compose predefined layers into neural networks. As a result, those frameworks do not have the ability to create fine-grained custom algorithms.
+Other deep learning frameworks in Java or Scala (including Scala binding of C++ frameworks) \cite{intel2016bigdl,skymind2017deeplearning4j,baydin2016hype,chen2017typesafe} do not support automatic differentiation, instead, they only provide their high level computational graph APIs to compose predefined layers into neural networks. As a result, those frameworks do not have the ability to create fine-grained custom algorithms.
 
 In this paper, we present DeepLearning.scala, which achieves all the above goals, and still get type checked.
 
@@ -34,9 +34,9 @@ For example, suppose we are building a robot for answering questions in IQ test 
   The answer is 12.
 \end{quote}
 
-In DeepLearning.scala, the robot can be implemented as a \lstinline{guessNextNumber} function of the following signature\footnote{The code examples from Listing \ref{guessNextNumber} to Listing \ref{predict_trained} do not contain necessary \lstinline{import} and configurations. For a runnable IQ test robot example backed by ND4J\cite{skymind2017nd4j}, see \href{http://deeplearning.thoughtworks.school/demo/GettingStarted.html}{Getting Started documentation on DeepLearning.scala website}.}:
+In DeepLearning.scala, the robot can be implemented as a \lstinline{guessNextNumber} function of the following signature\footnote{The code examples from Listing \ref{guessNextNumber} to Listing \ref{predict_trained} do not contain necessary \lstinline{import} and configurations. For a runnable IQ test robot example backed by ND4J \cite{skymind2017nd4j}, see \href{http://deeplearning.thoughtworks.school/demo/GettingStarted.html}{Getting Started documentation on DeepLearning.scala website}.}:
 
-\begin{lstlisting}[caption={The differentiable matrix multiplication implemented by \lstinline{map}/\lstinline{reduce}},label={guessNextNumber}]
+\begin{lstlisting}[float={htbp},caption={The differentiable matrix multiplication implemented by \lstinline{map}/\lstinline{reduce}},label={guessNextNumber}]
 def guessNextNumber(question: Seq[Double]): DoubleLayer = {
   // Perform a matrix multiplication between question and weights
   (question zip weights).map {
@@ -51,20 +51,20 @@ Unlike \cite{chen2017typesafe}'s special tensor type, our tensor can be simply t
 \footnote{DeepLearning.scala users can use other representations of tensors:
 \begin{enumerate*}
   \item For tensors with a statically typed shape, use \href{https://javadoc.io/page/com.chuusai/shapeless_2.11/latest/shapeless/Sized.html}{ \lstinline{shapeless.Sized}}. For example a $10\times20$ two-dimensional tensor can be typed as \lstinline{Sized[Sized[Double, _10], _20]}. For differentiable tensors, replace vanilla \lstinline{Double} to \lstinline{DoubleWeight} or \lstinline{DoubleLayer}.
-  \item For GPU-accelerated tensors, use \lstinline{INDArray}\cite{skymind2017nd4j}. For differentiable tensors, use \lstinline{INDArrayLayer} or \lstinline{INDArrayWeight} instead.
+  \item For GPU-accelerated tensors, use \lstinline{INDArray} \cite{skymind2017nd4j}. For differentiable tensors, use \lstinline{INDArrayLayer} or \lstinline{INDArrayWeight} instead.
 \end{enumerate*}
 }
 
 The \lstinline{weights} and \lstinline{bias} referenced by \lstinline{guessNextNumber} must be initialized first:
 
-\begin{lstlisting}[caption={Weight initialization}]
+\begin{lstlisting}[float={htbp},caption={Weight initialization}]
 val weights: Seq[DoubleWeight] = Stream.continually(DoubleWeight(math.random))
 val bias: DoubleWeight = DoubleWeight(math.random)
 \end{lstlisting}
 
 Then the robot try to answer IQ test questions like calling an ordinary function:
 
-\begin{lstlisting}[caption={Inference on an untrained model}]
+\begin{lstlisting}[float={htbp},caption={Inference on an untrained model}]
 val question = Seq(42.0, 43.0, 44.0)
 println(guessNextNumber(question).predict.blockingAwait)
 \end{lstlisting}
@@ -73,7 +73,7 @@ However, \lstinline{guessNextNumber} returned an incorrect result because the we
 
 In order to train them, a loss function is necessary:
 
-\begin{lstlisting}[caption={The differentiable square loss function},label={squareLoss}]
+\begin{lstlisting}[float={htbp},caption={The differentiable square loss function},label={squareLoss}]
 def squareLoss(robotAnswer: DoubleLayer, expectedAnswer: Double): DoubleLayer = {
   val difference: DoubleLayer = robotAnswer - expectedAnswer
   difference * difference
@@ -84,7 +84,7 @@ The above loss function \lstinline{squareLoss} determines the squared error betw
 
 Both \lstinline{squareLoss} and \lstinline{guessNextNumber} are ordinary functions, and can be composed in other functions:
 
-\begin{lstlisting}[caption={A differentiable function to train a linear regression model}]
+\begin{lstlisting}[float={htbp},caption={A differentiable function to train a linear regression model}]
 def linearRegression(question: Seq[Double], expectedAnswer: Double): DoubleLayer = {
   val robotAnswer = guessNextNumber(question)
   squareLoss(robotAnswer, expectedAnswer)
@@ -93,7 +93,7 @@ def linearRegression(question: Seq[Double], expectedAnswer: Double): DoubleLayer
 
 \lstinline{linearRegression}, composed of \lstinline{squaredLoss} and \lstinline{squaredLoss}, returns a \lstinline{DoubleLayer} of the loss for a specific question and its expected answer. \lstinline{linearRegression} is a linear regression model with a square loss, and it can be trained.
 
-\begin{lstlisting}[caption={Training for 500 iterations}]
+\begin{lstlisting}[float={htbp},caption={Training for 500 iterations}]
 val question1 = Seq(3.0, 4.0, 5.0)
 val expectedAnswer1 = 6.0
 
@@ -110,7 +110,7 @@ The weights and bias referenced by \lstinline{linearRegression} are modified dur
 
 When weights and bias have been adjusted to make the loss a very small number, \lstinline{guessNextNumber} should return values that are very close to the expected answers.
 
-\begin{lstlisting}[caption={Inference on a trained model},label={predict_trained}]
+\begin{lstlisting}[float={htbp},caption={Inference on a trained model},label={predict_trained}]
 val question = Seq(42.0, 43.0, 44.0)
 println(guessNextNumber(question).predict.blockingAwait)
 \end{lstlisting}
@@ -128,18 +128,18 @@ The IQ test robot example shows some basic concepts in DeepLearning.scala.
 
 \section{Dynamic Neural Networks}
 
-DeepLearning.scala supports dynamic neural network. It means that the control flow of a neural network can differ according to its internal intermediate state when processing a special input. Especially, the ability to conditional enabling a sub-neural network is a crucial feature to build outrageously large neural networks\cite{shazeer2017outrageously}.
+DeepLearning.scala supports dynamic neural network. It means that the control flow of a neural network can differ according to its internal intermediate state when processing a special input. Especially, the ability to conditional enabling a sub-neural network is a crucial feature to build outrageously large neural networks \cite{shazeer2017outrageously}.
 
 Suppose we have two sub-neural networks, \lstinline{leftSubnet} and \lstinline{rightSubnet}. We want to build a gated network, which conditionally runs either \lstinline{leftSubnet} or \lstinline{rightSubnet} for a special \lstinline{input}.
 
-\begin{lstlisting}[caption={Predefined sub-networks}]
+\begin{lstlisting}[float={htbp},caption={Predefined sub-networks}]
 def leftSubnet(input: INDArrayLayer): INDArrayLayer
 def rightSubnet(input: INDArrayLayer): INDArrayLayer
 \end{lstlisting}
 
 Which sub-network is selected for the \lstinline{input} should be determined by the \lstinline{gate} network, which returns a pair of differentiable double expressions that indicate the preferences between \lstinline{leftSubnet} and \lstinline{rightSubnet}.
 
-\begin{lstlisting}[caption={Predefined gate network}]
+\begin{lstlisting}[float={htbp},caption={Predefined gate network}]
 def gate(input: INDArrayLayer): (DoubleLayer, DoubleLayer)
 \end{lstlisting}
 
@@ -166,7 +166,7 @@ In DeepLearning.scala, there are three different approaches to implement the gat
 
 An obvious approach (Listing \ref{naiveGatedNet}) to create the gated network is eagerly executing the \lstinline{gate}.
 
-\begin{lstlisting}[caption={The eager execution implementation of gated network}, label={naiveGatedNet}]
+\begin{lstlisting}[float={htbp},caption={The eager execution implementation of gated network}, label={naiveGatedNet}]
 def naiveGatedNet(input: INDArrayLayer): INDArrayLayer = {
   val scores = gate(input)
   if (scores._1.predict.blockingAwait > scores._2.predict.blockingAwait) {
@@ -187,11 +187,11 @@ So, the two calls to the \lstinline{predict} method in the \lstinline{if} will e
 
 \subsection{Monadic Control Flow (good)\label{monadic}}
 
-Ideally, the calls to \lstinline{predict} should be avoided in differentiable functions. The recommended approach to create a dynamic neural network is using \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html\#forward(differentiable:Differentiable):com.thoughtworks.raii.asynchronous.Do[com.thoughtworks.deeplearning.DeepLearning.Tape[DeepLearning.this.Data,DeepLearning.this.Delta]]}{\lstinline{forward}}, which returns a monadic value of \lstinline{Do[Tape[Data, Delta]]}, which can be used in a monadic control flow via Scalaz\cite{kenji2017scalaz}'s type classes\cite{oliveira2010type} \lstinline{Monad} and \lstinline{Applicative}.
+Ideally, the calls to \lstinline{predict} should be avoided in differentiable functions. The recommended approach to create a dynamic neural network is using \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html\#forward(differentiable:Differentiable):com.thoughtworks.raii.asynchronous.Do[com.thoughtworks.deeplearning.DeepLearning.Tape[DeepLearning.this.Data,DeepLearning.this.Delta]]}{\lstinline{forward}}, which returns a monadic value of \lstinline{Do[Tape[Data, Delta]]}, which can be used in a monadic control flow via Scalaz \cite{kenji2017scalaz}'s type classes \cite{oliveira2010type} \lstinline{Monad} and \lstinline{Applicative}.
 
 Listing \ref{monadicGatedNet} shows the monadic control flow of gated network.
 
-\begin{lstlisting}[caption={Monadic gated network}, label={monadicGatedNet}]
+\begin{lstlisting}[float={htbp},caption={Monadic gated network}, label={monadicGatedNet}]
 def monadicGatedNet(input: INDArrayLayer): INDArrayLayer = {
   val scores = gate(input)
   val gatedForward: Do[Tape[INDArray, INDArray]] = {
@@ -209,7 +209,7 @@ def monadicGatedNet(input: INDArrayLayer): INDArrayLayer = {
 }
 \end{lstlisting}
 
-This gated network is built from the monadic expression \lstinline{gatedForward}, which contains some \lstinline{forward} calls, which are asynchronous operations (or \href{https://javadoc.io/page/com.thoughtworks.raii/asynchronous_2.11/latest/com/thoughtworks/raii/asynchronous$$Do.html}{\lstinline{Do}}) that produce Wengert list record (or \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning$$Tape.html}{\lstinline{Tape}}). The implementation detail of \lstinline{Do} and \lstinline{Tape} will be discussed in section \ref{backpropagation}. For now, we only need to know that \lstinline{Do} is a monadic data type that supports \lstinline{flatMap}. By \lstinline{flatMap}ping those \lstinline{forward} operations together, we built the entire monadic control flow \lstinline{gatedForward} for the gated network.
+This gated network is built from the monadic expression \lstinline{gatedForward}, which contains some \lstinline{forward} calls, which are asynchronous operations (or \href{https://javadoc.io/page/com.thoughtworks.raii/asynchronous_2.11/latest/com/thoughtworks/raii/asynchronous$$Do.html}{\lstinline{Do}}) that produce Wengert list record (or \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning$$Tape.html}{\lstinline{Tape}}). The implementation detail of \lstinline{Do} and \lstinline{Tape} will be discussed in section \ref{implementation}. For now, we only need to know that \lstinline{Do} is a monadic data type that supports \lstinline{flatMap}. By \lstinline{flatMap}ping those \lstinline{forward} operations together, we built the entire monadic control flow \lstinline{gatedForward} for the gated network.
 
 The \lstinline{monadicGatedNet} represents a dynamic neural network, since each \lstinline{forward} operation is started after its previous \lstinline{forward} done. This behavior allows dynamically determining succeeding operations according to result of previous \lstinline{forward} operations, as shown in the \lstinline{if} clause in Listing \ref{monadicGatedNet}.
 
@@ -220,7 +220,7 @@ However, \lstinline{flatMap} prevents additional optimization, too.
 
 Ideally, the independent operations \lstinline{scores._1.forward} and \lstinline{scores._2.forward} should run in parallel. This can be done by tagging \lstinline{Do} as \href{https://javadoc.io/page/org.scalaz/scalaz_2.11/latest/scalaz/Tags$$Parallel.html}{\lstinline{Parallel}}, and use \href{https://javadoc.io/page/org.scalaz/scalaz_2.11/latest/scalaz/Applicative.htm\l#tuple2[A,B](fa:=>F[A],fb:=>F[B]):F[(A,B)]}{\lstinline{scalaz.Applicative.tuple2}} instead of \lstinline{flatMap} (Listing \ref{applicativeMonadicGatedNet}).
 
-\begin{lstlisting}[caption={Applicative + monadic gated network}, label={applicativeMonadicGatedNet}]
+\begin{lstlisting}[float={htbp},caption={Applicative + monadic gated network}, label={applicativeMonadicGatedNet}]
 def applicativeMonadicGatedNet(input: INDArrayLayer): INDArrayLayer = {
   val scores = gate(input)
   val parallelForward1: ParallelDo[Tape[Double, Double]] = {
@@ -249,43 +249,43 @@ This \lstinline{applicativeMonadicGatedNet} takes both advantages from applicati
 
 The parallel applicative operation is also the default behavior for all built-in vector binary operators. Listing \ref{parallelByDefault} shows some simple expressions that will be executed in parallel.
 
-\begin{lstlisting}[caption={By default, \lstinline{a * b} and \lstinline{c * d} will be executed in parallel because they are independent}, label={parallelByDefault}]
+\begin{lstlisting}[float={htbp},caption={By default, \lstinline{a * b} and \lstinline{c * d} will be executed in parallel because they are independent}, label={parallelByDefault}]
 def parallelByDefault(a: INDArrayLayer, b: INDArrayLayer, c: INDArrayLayer, d: INDArrayLayer): INDArrayLayer = {
   a * b + c * d
 }
 \end{lstlisting}
 
-By combining both applicative functors and monads, DeepLearning.scala supports dynamic neural network and still allows the independent parts of the neural network to run in parallel. In addition, the backward pass of differentiable functions built from parallel applicative functors or built-in vector binary operators will be executed in parallel, too.
+By combining both applicative functors and monads, DeepLearning.scala supports dynamic neural network and still allows the independent parts of the neural network to run in parallel. In addition, the backward() pass of differentiable functions built from parallel applicative functors or built-in vector binary operators will be executed in parallel, too.
 
-\section{Hyperparameters}
+\section{Hyperparameters\label{hyperparameters}}
 
 \subsection{Configuring Hyperparameters with Plug-ins}
 
 Nowadays neural networks contain hyperparameters specified by human. In DeepLearning.scala, those hyperparameters are configured as named parameters provided by \glspl{plug-in}.
 
-\footnote{In Ammonite REPL\cite{lihaoyi2017ammonite} or Jupyter Scala\cite{alexarchambault2017jupyter}, the hyperparameter initialization code should be wrapped in a \lstinline{interp.load} call, as a workaround for \url{https://github.com/lihaoyi/Ammonite/issues/649} and \url{https://github.com/scala/bug/issues/10390}.}
+\footnote{In Ammonite REPL \cite{lihaoyi2017ammonite} or Jupyter Scala \cite{alexarchambault2017jupyter}, the hyperparameter initialization code should be wrapped in a \lstinline{interp.load} call, as a workaround for \url{https://github.com/lihaoyi/Ammonite/issues/649} and \url{https://github.com/scala/bug/issues/10390}.}
 
-\begin{lstlisting}[caption={Configuring hyperparameters with a fixed learning rate}, label={hyperparameters1}]
+\begin{lstlisting}[float={htbp},caption={Configuring hyperparameters with a fixed learning rate}, label={hyperparameters1}]
 val hyperparameters1 = Factory[Builtins with FixedLearningRate].newInstance(learningRate = 0.01)
 \end{lstlisting}
 
 \lstinline{Builtins} and \lstinline{FixedLearningRate} are \glspl{plug-in}. The name parameters like \lstinline{learningRate} may may differ when different \glspl{plug-in} are used.
 
-\Glspl{differentiable expression} and \glspl{trainable variable} introduced in section \ref{concepts} are actually path-dependent types\cite{amin2014foundations} defined inside \lstinline{hyperparameter1}, whose type is a refinement type of \lstinline{(Builtins with FixedLearningRate)}\footnote{We omit the type annotation for \lstinline{hyperparameter1} in this paper because the refinement type is too long. Add a \lstinline{-Xprint:typer} flag to your Scala compiler if you want to see the actual type.}, which can be \lstinline{import}ed as shown in Listing \ref{import_types}.
+\Glspl{differentiable expression} and \glspl{trainable variable} introduced in section \ref{concepts} are actually path-dependent types \cite{amin2014foundations} defined inside \lstinline{hyperparameter1}, whose type is a refinement type of \lstinline{(Builtins with FixedLearningRate)}\footnote{We omit the type annotation for \lstinline{hyperparameter1} in this paper because the refinement type is too long. Add a \lstinline{-Xprint:typer} flag to your Scala compiler if you want to see the actual type.}, which can be \lstinline{import}ed as shown in Listing \ref{import_types}.
 
-\begin{lstlisting}[caption={Importing \Glspl{differentiable expression} and \glspl{trainable variable} types}, label={import_types}]
+\begin{lstlisting}[float={htbp},caption={Importing \Glspl{differentiable expression} and \glspl{trainable variable} types}, label={import_types}]
 import hyperparameters1.{INDArrayLayer, INDArrayWeight}
 \end{lstlisting}
 
 Then we can create \lstinline{hyperparameters1.INDArrayLayer} and \lstinline{hyperparameters1.INDArrayWeight}, shown in Listing \ref{weight1} and \ref{layer1}.
 
-\begin{lstlisting}[caption={\Glspl{trainable variable} that belong to \lstinline{hyperparameter1}}, label={weight1}]
+\begin{lstlisting}[float={htbp},caption={\Glspl{trainable variable} that belong to \lstinline{hyperparameter1}}, label={weight1}]
 val weight1: INDArrayWeight = INDArrayWeight(Nd4j.randn(10, 10))
 \end{lstlisting}
 
 The learning rate of \lstinline{weight1} should be 0.01 according to configuration in Listing \ref{hyperparameters1}.
 
-\begin{lstlisting}[caption={\Glspl{differentiable expression} that belong to \lstinline{hyperparameter1}}, label={layer1}]
+\begin{lstlisting}[float={htbp},caption={\Glspl{differentiable expression} that belong to \lstinline{hyperparameter1}}, label={layer1}]
 def layer1(input: INDArrayLayer): INDArrayLayer = {
   import hyperparameters1.implicits._
   import hyperparameters1.max
@@ -299,18 +299,18 @@ Differentiable functions \lstinline{max} and \lstinline{dot} used in \lstinline{
 
 DeepLearning.scala allows \glspl{differentiable expression} that belong to one hyperparameter configuration to work together with \glspl{differentiable expression} that belong to another hyperparameter configuration. 
 
-\begin{lstlisting}[caption={Hyperparameters for Adagrad}, label={hyperparameters2}]
+\begin{lstlisting}[float={htbp},caption={Hyperparameters for Adagrad}, label={hyperparameters2}]
 val hyperparameters2 = Factory[Builtins with Adagrad with FixedLearningRate].newInstance(
   learningRate = 0.002,
   eps = 0.0001
 )
 \end{lstlisting}
 
-\begin{lstlisting}[caption={\Glspl{trainable variable} optimized by Adagrad}, label={weight2}]
+\begin{lstlisting}[float={htbp},caption={\Glspl{trainable variable} optimized by Adagrad}, label={weight2}]
 val weight2 = hyperparameters2.INDArrayWeight(Nd4j.randn(10, 10))
 \end{lstlisting}
 
-\begin{lstlisting}[caption={A two-layer neural network built from heterogeneous hyperparameters}, label={layer2}]
+\begin{lstlisting}[float={htbp},caption={A two-layer neural network built from heterogeneous hyperparameters}, label={layer2}]
 def layer2(input: hyperparameters1.INDArrayLayer): hyperparameters2.INDArrayLayer = {
   import hyperparameters2.implicits._
   import hyperparameters2.max
@@ -328,7 +328,7 @@ Listing \ref{layer2} created the two-layer neural network \lstinline{layer2} tha
 
 \begin{itemize}
   \item \lstinline{weight1} is optimized by ordinary gradient descent with a fixed learning rate 0.1;
-  \item \lstinline{weight2} is optimized by Adagrad\cite{duchi2011adaptive} with an initial learning rate 0.002.
+  \item \lstinline{weight2} is optimized by Adagrad \cite{duchi2011adaptive} with an initial learning rate 0.002.
 \end{itemize}
 
 \subsubsection{Ad Hoc Polymorphism}
@@ -343,18 +343,18 @@ Ideally, \lstinline{layer1} and \lstinline{layer2} should be polymorphic differe
 
   \item \Glspl{differentiable expression} of hidden states produced by any previous neural network layers, regardless of what hyperparameters are configured for those layers. i.e. any \lstinline{INDArrayLayer}s regardless of the prefixes.
   
-  \item \Glspl{trainable variable} in the case of activation maximization technique\cite{erhan2009visualizing}.i.e. any \lstinline{INDArrayWeight}s regardless of the prefixes.
+  \item \Glspl{trainable variable} in the case of activation maximization technique \cite{erhan2009visualizing}.i.e. any \lstinline{INDArrayWeight}s regardless of the prefixes.
 
 \end{itemize}
 
-We provide a dependent-type type class\cite{gurnelltype} \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html}{\lstinline{DeepLearning}} that witnesses any supported expressions including \glspl{differentiable expression}, \glspl{trainable variable}, or vanilla non-differentiable types. The users can create type aliases to restrict the types of state during forward pass and backward pass by refining  as shown in Listing \ref{INDArrayDeepLearning}.
+We provide a dependent-type type class \cite{gurnelltype} \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html}{\lstinline{DeepLearning}} that witnesses any supported expressions including \glspl{differentiable expression}, \glspl{trainable variable}, or vanilla non-differentiable types. The users can create type aliases to restrict the types of state during forward pass and backward() pass by refining  as shown in Listing \ref{INDArrayDeepLearning}.
 
-\begin{lstlisting}[caption={A type class alias that witnesses dense vector expressions}, label={INDArrayDeepLearning}]
+\begin{lstlisting}[float={htbp},caption={A type class alias that witnesses dense vector expressions}, label={INDArrayDeepLearning}]
 type INDArrayExpression[Expression] = DeepLearning[Expression] {
   /** The type of result calculated during forward pass */
   type Data = INDArray
 
-  /** The type of derivative during backward pass */
+  /** The type of derivative during backward() pass */
   type Delta = INDArray
 }
 \end{lstlisting}
@@ -363,7 +363,7 @@ type INDArrayExpression[Expression] = DeepLearning[Expression] {
 
 By using \lstinline{INDArrayExpression} as a context bound, \lstinline{layer1} and \lstinline{layer2} can accept any vector expression as shown in Listing \ref{polyLayer2}.
 
-\begin{lstlisting}[caption={Polymorphic two-layer neural network}, label={polyLayer2}]
+\begin{lstlisting}[float={htbp},caption={Polymorphic two-layer neural network}, label={polyLayer2}]
 def polyLayer1[Input: INDArrayExpression](input: Input): hyperparameters1.INDArrayLayer = {
   import hyperparameters1.implicits._
   import hyperparameters1.max
@@ -388,13 +388,13 @@ With the help of \lstinline{DeepLearning} type class, we created a two-layer neu
 
 \subsection{Built-in Plug-ins at a Glance}
 
-DeepLearning.scala's \gls{plug-in} mechanism is a solution to the well known Expression Problem, whose goal is to define a datatype by cases, where one can add new cases to the datatype and new functions over the datatype, without recompiling existing code, and while retaining static type safety (e.g., no casts)\cite{wadler1998expression}.
+DeepLearning.scala's \gls{plug-in} mechanism is a solution to the well known Expression Problem, whose goal is to define a datatype by cases, where one can add new cases to the datatype and new functions over the datatype, without recompiling existing code, and while retaining static type safety (e.g., no casts) \cite{wadler1998expression}.
 
 All DeepLearning.scala features, including types and operations, are implemented as \glspl{plug-in}. The \lstinline{Builtins} \gls{plug-in} used in Listing \ref{hyperparameters1} and \ref{hyperparameters2} is simply a shortcut of many other built-in \glspl{plug-in}.
 
 For example, hyperparameter initialization in Listing \ref{hyperparameters1} is synonymous with the following Listing \ref{hyperparameters1_alternative}.
 
-\begin{lstlisting}[caption={Configuring hyperparameters with a fixed learning rate, alternatively}, label={hyperparameters1_alternative}]
+\begin{lstlisting}[float={htbp},caption={Configuring hyperparameters with a fixed learning rate, alternatively}, label={hyperparameters1_alternative}]
 val hyperparameters1 = Factory[ImplicitsSingleton with Layers with Weights with Logging with Names with Operators with FloatTraining with FloatLiterals with FloatWeights with FloatLayers with CumulativeFloatLayers with DoubleTraining with DoubleLiterals with DoubleWeights with DoubleLayers with CumulativeDoubleLayers with INDArrayTraining with INDArrayLiterals with INDArrayWeights with INDArrayLayers with CumulativeINDArrayLayers with FixedLearningRate
 ].newInstance(learningRate = 0.01)
 \end{lstlisting}
@@ -420,7 +420,7 @@ What makes our \gls{plug-in} extraordinary in comparison to original Expression 
 \end{anonsuppress}
 :
 
-\begin{lstlisting}[caption={The implementation of the \lstinline{Adagrad} \gls{plug-in}}, label={Adagrad}]
+\begin{lstlisting}[float={htbp},caption={The implementation of the \lstinline{Adagrad} \gls{plug-in}}, label={Adagrad}]
 trait Adagrad extends INDArrayWeights {
   /** The hyperparameter `eps`, which should be configured in `Factory.newInstance()` */
   def eps: Double
@@ -457,26 +457,26 @@ The implementation of \lstinline{Adagrad} \gls{plug-in} consists of:
 \begin{itemize}
   \item Declaring the \lstinline{INDArrayWeights} \gls{plug-in} as a dependency.
   \item Adding a new hyperparameter \lstinline{eps}, which can be configured by a named parameter in \lstinline{Factory.newInstance()}.
-  \item Changing the upper type bound of abstract type \lstinline{INDArrayWeight} to \lstinline{INDArrayWeightApi}.
+  \item Changing the upper type bound of the abstract type \lstinline{INDArrayWeight} to newly defined \lstinline{INDArrayWeightApi}.
   \begin{itemize}
     \item Adding a new internal state \lstinline{cache} in \lstinline{INDArrayWeightApi}.
   \end{itemize}
-  \item Changing the upper type bound of abstract type \lstinline{INDArrayOptimizer} to \lstinline{INDArrayOptimizerApi}.
+  \item Changing the upper type bound of the abstract type \lstinline{INDArrayOptimizer} to  newly defined \lstinline{INDArrayOptimizerApi}.
   \begin{itemize}
     \item Changing the behavior of \lstinline{delta} method \lstinline{cache} in \lstinline{INDArrayOptimizerApi}.
   \end{itemize}
 \end{itemize}
 
-Thanks to Scala's Class Linearization\cite{odersky2017scala} feature, \lstinline{Adagrad} \gls{plug-in} can change the computation of \lstinline{delta} without the knowledge of which \glspl{plug-in} other than \lstinline{Adagrad} are changing \lstinline{delta}, too. This ability is even more extensible than the original Expression Problem\begin{anonsuppress}\cite{yang2017expression}
+Thanks to Scala's Class Linearization \cite{odersky2017scala} feature, \lstinline{Adagrad} \gls{plug-in} can change the computation of \lstinline{delta} without the knowledge of which \glspl{plug-in} other than \lstinline{Adagrad} are changing \lstinline{delta}, too. This ability is even more extensible than the original Expression Problem\begin{anonsuppress} \cite{yang2017expression}
 \end{anonsuppress}
 .
 
-\section{Backpropagation through Monads\label{backpropagation}}
+\section{Implementation\label{implementation}}
 
 Automatic differentiation in a functional framework were considered impossible to be implemented as a library without the ability to reflectively access and
-transform expressions associated with closures\cite{pearlmutter2008reverse}. For example, if you want to create a \lstinline{transform} function that returns the derivative for given function \lstinline{f}:
+transform expressions associated with closures \cite{pearlmutter2008reverse}. For example, if you want to create a \lstinline{transform} function that returns the derivative for given function \lstinline{f}:
 
-\begin{lstlisting}[caption={Impossible Transform Function for Automatic Differentiation}, label={transform}]
+\begin{lstlisting}[float={htbp},caption={Impossible transform function for automatic differentiation}, label={transform}]
 def transform(f: Double => Double): Double => Double
 \end{lstlisting}
 
@@ -484,25 +484,25 @@ Obviously this \lstinline{transform} function is impossible without the knowledg
 
 Fortunately, in a statically typed language, for type safety, the differentiable types and non-differentiable types should differ. The type signature of our automatic differentiation primitive can be written as Listing \ref{typeSafeTransform}:
 
-\begin{lstlisting}[caption={Type Safe Transform Function for Automatic Differentiation}, label={typeSafeTransform}]
-  def typeSafeTransform(differentiableFunction: Double => DoubleLayer) = { input: Double =>
+\begin{lstlisting}[float={htbp},caption={Type safe transform function for automatic differentiation}, label={typeSafeTransform}]
+def typeSafeTransform(differentiableFunction: Double => DoubleLayer) = { input: Double =>
   val tape = differentiableFunction(input).forward
-  tape.backward(Do.now(1.0))
+  tape.backward()(Do.now(1.0))
 }
 \end{lstlisting}
 
 Unlike \cite{pearlmutter2008reverse}'s compiler primitive $\overleftarrow{J}$, our \lstinline{typeSafeTransform} can use the additional information stored on \lstinline{DoubleLayer}. As a result, our \lstinline{typeSafeTransform} can be implemented as an ordinary Scala function instead of macros.
 
-The remainder of Section \ref{backpropagation} is organized as follows.
+The remainder of Section \ref{implementation} is organized as follows.
 % TODO:
 
-\subsection{Multiple Trainable Variables}
+\subsection{Ordinary Dual Number}
 
 Our approach for reverse mode AD use a data structure similar to traditional forward mode AD, with only a little change.
 
 Forward mode AD can be viewed as computation on dual number. For example, dual number for scalar types can be implemented as Listing \ref{DualNumber}:
 
-\begin{lstlisting}[caption={Dual number for forward mode AD}, label={DualNumber}]
+\begin{lstlisting}[float={htbp},caption={Dual number for forward mode AD}, label={DualNumber}]
 type Data = Double
 type PartialDelta = Double
 case class DualNumber(data: Data, delta: PartialDelta)
@@ -510,7 +510,7 @@ case class DualNumber(data: Data, delta: PartialDelta)
 
 Arithmetic operations on those dual number can be implemented as Listing \ref{dualArithmetic}:
 
-\begin{lstlisting}[caption={Arithmetic operations on dual number}, label={dualArithmetic}]
+\begin{lstlisting}[float={htbp},caption={Arithmetic operations on dual number}, label={dualArithmetic}]
 object DualNumber {
   def plus(left: DualNumber, right: DualNumber): DualNumber = {
     DualNumber(left.data + right.data, left.delta + right.delta)
@@ -521,95 +521,341 @@ object DualNumber {
 }
 \end{lstlisting}
 
+\subsection{Monadic Closure-based Dual Number}
+
 However, this approach is hard to type-check if we want to support multiple  \glspl{trainable variable}. \lstinline{PartialDelta} in Listing \ref{DualNumber} represents the partial derivative of \glspl{trainable variable}. In AD tools that support only one \gls{trainable variable}, the \gls{trainable variable} is usually forced to be the input. Hence \lstinline{PartialDelta} is the input type for those AD tools. This assumption is broken for our case, since our delta type of a specific \lstinline{DualNumber} must contain derivatives for all \glspl{trainable variable} that were used to produce the \lstinline{DualNumber}, not only the partial derivative of input. As a result, the type of delta varies when the number of \glspl{trainable variable} grows.
 
 To type-check the delta, considering the only usage of the delta in a neural network is updating \glspl{trainable variable} in a gradient descent based optimization algorithm. We can replace \lstinline{PartialDelta} to a \lstinline{UpdateWeights} closure.
 
-\begin{lstlisting}[caption={Replacing \lstinline{PartialDelta} to a closure}, label={class ClosureBasedDualNumber}]
+\begin{lstlisting}[float={htbp},caption={Replacing \lstinline{PartialDelta} to a closure}, label={class ClosureBasedDualNumber}]
 type Data = Double  
-case class ClosureBasedDualNumber(data: Data, delta: UpdateWeights)
+case class ClosureBasedDualNumber(data: Data, backward: UpdateWeights)
 \end{lstlisting}
 
 \lstinline{UpdateWeights} in Listing \ref{class ClosureBasedDualNumber} is a function type that contains side-effects to update \glspl{trainable variable}. In order to implement arithmetic operations for the new dual number, the operations on \lstinline{PartialDelta} should be replaced to custom functions for \lstinline{UpdateWeights} (Listing \ref{object ClosureBasedDualNumber}):
 
-\begin{lstlisting}[caption={Replacing operations on \lstinline{PartialDelta} to custom functions for \lstinline{UpdateWeights}}, label={object ClosureBasedDualNumber}]  
+\begin{lstlisting}[float={htbp},caption={Replacing operations on \lstinline{PartialDelta} to custom functions for \lstinline{UpdateWeights}}, label={object ClosureBasedDualNumber}]  
 
 object ClosureBasedDualNumber {
   def plus(left: ClosureBasedDualNumber, right: ClosureBasedDualNumber): ClosureBasedDualNumber = {
-    ClosureBasedDualNumber(left.data + right.data, UpdateWeights.plus(left.delta, right.delta))
+    ClosureBasedDualNumber(left.data + right.data, UpdateWeights.plus(left.backward(), right.backward()))
   }
   def multiply(left: ClosureBasedDualNumber, right: ClosureBasedDualNumber): ClosureBasedDualNumber = {
     ClosureBasedDualNumber(
       left.data * right.data,
-      UpdateWeights.multiply(left.data, right.delta) + UpdateWeights.multiply(right.data, left.delta))
+      UpdateWeights.multiply(left.data, right.backward()) + UpdateWeights.multiply(right.data, left.backward()))
   }
 }
 \end{lstlisting}
 
 
-Mathematically, the \lstinline{UpdateWeights} type in a dual number can be any vector space, i.e. the \lstinline{UpdateWeights} closure itself must support addition and scalar multiplication operations(Listing \ref{UpdateWeights}).
+Mathematically, the \lstinline{UpdateWeights} type in a dual number can be any vector space, i.e. the \lstinline{UpdateWeights} closure itself must support addition and scalar multiplication operations.
 
-\begin{lstlisting}[caption={Arithmetic operations for the closure that contains side-effects}, label={UpdateWeights}, escapeinside={(*}{*)}]
-type UpdateWeights = Double => SideEffects
+The addition operation for closures is defined as:
+
+\begin{equation}
+(f_0 + f_1)(x) = f_0(x) + f_1(x)
+\end{equation}
+
+And the scalar multiplication operation for closures is defined as:
+
+\begin{equation}
+(x_0f)(x_1) = f(x_0x_1)
+\end{equation}
+
+These arithmetic operations can be implemented in monadic data types as shown in Listing \ref{UpdateWeights}.
+
+\begin{lstlisting}[float={htbp},caption={Arithmetic operations for the closure that contains side-effects}, label={UpdateWeights}, escapeinside={(*}{*)}]
+type UpdateWeights = Do[Double] => SideEffects
 object UpdateWeights {
   /**(* $(f_0 + f_1)(x) = f_0(x) + f_1(x)$ *)*/
-  def plus(f0: UpdateWeights, f1: UpdateWeights) = { x: Double =>
-    f0(x) |+| f1(x)
+  def plus(f0: UpdateWeights, f1: UpdateWeights) = { doX: Do[Double] =>
+    f0(doX) |+| f1(doX)
   }
 
   /**(* $(x_0f)(x_1) = f(x_0x_1)$ *)*/
-  def multiply(x0: Double, f: UpdateWeights) = { x1: Double =>
-    f(x0 * x1)
+  def multiply(x0: Double, f: UpdateWeights) = { doX1: Do[Double] =>
+    f(doX1.map(x0 * _))
   }
 }
 \end{lstlisting}
 
 \lstinline{UpdateWeights}, as a replacement to original \lstinline{PartialDelta}, is a closure able to update derivatives for all weight with a coefficient (the \lstinline{Double} parameter).
-\lstinline{|+|} is the \lstinline{append} operation of \lstinline{scala.Semigroup}, which could be any cumulative data type. In DeepLearning.scala, our \lstinline{SideEffects} is based on the asynchronous operation \lstinline{UnitContinuation}\footnote{\lstinline{UnitContinuation[A]} is an opaque alias\cite{erik2017opaque} of \lstinline{(A => Trampoline[Unit]) => Trampoline[Unit]}, implemented as a separate library at \url{https://github.com/ThoughtWorksInc/future.scala}. In DeepLearning.scala it is used as a monadic data type for encapsulating side effects in stack-safe asynchronous programming.}.
+\lstinline{|+|} is the \lstinline{append} operation of \lstinline{scala.Semigroup}, which could be any cumulative data type.
 
-\begin{lstlisting}[caption={Monadic side-effects}, label={SideEffects}]
+Also note that the parameter is a monadic data type \href{https://javadoc.io/page/com.thoughtworks.raii/asynchronous_2.11/latest/com/thoughtworks/raii/asynchronous$$Do.html}{\lstinline{Do}} that encapsulates the computation of derivative. Unlike strictly evaluated values, \lstinline{Do} is an operation evaluated in need.
+
+In DeepLearning.scala, our \lstinline{SideEffects} is based on the asynchronous operation \lstinline{UnitContinuation}.
+
+\begin{lstlisting}[float={htbp},caption={Monadic side-effects}, label={SideEffects}]
 type SideEffects = UnitContinuation[Unit]
 \end{lstlisting}
 
-The \lstinline{SideEffects} for neural networks conform associative law because the side effects are just updating \glspl{trainable variable}. Thus, our \lstinline{UpdateWeights.plus} and \lstinline{UpdateWeights.multiply} are equivalent to the operations on strictly evaluated scalar value \lstinline{PartialDelta} in forward mode AD.
+\lstinline{UnitContinuation[A]} is an opaque alias \cite{erik2017opaque} of \lstinline{(A => Trampoline[Unit]) => Trampoline[Unit]}, implemented as a separate library at \url{https://github.com/ThoughtWorksInc/future.scala}. It is used in DeepLearning.scala as a monadic data type for encapsulating side effects in stack-safe asynchronous programming.
 
-\subsection{Diamond Dependencies in Differentiable Expressions}
+The \lstinline{SideEffects} for neural networks conform associative law because the only side effects is updating \glspl{trainable variable}. Thus, our \lstinline{UpdateWeights.plus} and \lstinline{UpdateWeights.multiply} are equivalent to the operations on strictly evaluated scalar value \lstinline{PartialDelta} in forward mode AD.
 
-Although the closured-based dual number approach from Listing \ref{class ClosureBasedDualNumber} to \ref{SideEffects} supports multiple \glspl{trainable variable}, the closure-based computation has a performance issue in the case of diamond dependencies.
+Since \lstinline{UpdateWeights} is a closure with side effects, a \gls{trainable variable} can be represented as a tuple of a mutable value and the action to modify the mutable value.
 
-\begin{lstlisting}[caption={Monadic side-effects}, label={y1}]  
-var weight: Double = math.random
-val learningRate = 0.001
-
-def readWeight() = ClosureBasedDualNumber(weight, { delta =>
-  weight -= learningRate * delta
-})
-
-val w = readWeight()
-val y0 = ClosureBasedDualNumber.multiply(w, w)
-val y1 = ClosureBasedDualNumber.multiply(y0, y0)
+\begin{lstlisting}[float={htbp},caption={Create a dual number for a \gls{trainable variable}}, label={createTrainableVariable}]
+def createTrainableVariable(initialValue: Double, learningRate: Double): ClosureBasedDualNumber = {
+  var data = initialValue
+  val backward: UpdateWeights = { doDelta: Do[Double] =>
+    val sideEffects: Do[Unit] = doDelta.map { delta =>
+      value -= learningRate * delta
+    }
+    convertDoToUnitContinuation(sideEffects)
+  }
+  ClosureBasedDualNumber(data, backward)
+}
 \end{lstlisting}
 
-\begin{figure}
+In Listing \ref{createTrainableVariable}, the \gls{trainable variable} is trained by a fixed learning rate to simplify the hyperparameters of optimization algorithms. The actual DeepLearning.scala implementation uses a more sophisticate approach to configure the hyperparameters described in Section \ref{hyperparameters}.
+
+Similar to \glspl{trainable variable}, a non-trainable value can be represented as a tuple of the value and a no-op closure shown in Listing \ref{createLiteral}.
+
+\begin{lstlisting}[float={htbp},caption={Create a dual number for a  non-trainable value}, label={createLiteral}]
+def createLiteral(data: Double): ClosureBasedDualNumber = {
+  val backward = { doDelta: Do[Double] =>
+    UnitContinuation.now(())
+  }
+  ClosureBasedDualNumber(data, backward)
+}
+\end{lstlisting}
+
+Because \lstinline{delta} is an action instead of pre-evaluated value, the implementation of \lstinline{backward} for non-trainable value can entirely avoid executing unnecessary computation in \lstinline{doDelta}.
+
+Finally, we can create a differentiable function (Listing \ref{computationalTree}), whose leaf nodes are \lstinline{createTrainableVariable} and \lstinline{createLiteral}, and internal nodes are arithmetic operations in Listing \ref{object ClosureBasedDualNumber}.
+
+\begin{lstlisting}[float={htbp},caption={A tree-structured \gls{differentiable function}},label={computationalTree}]
+val w0 = createTrainableVariable(math.random, 0.001)
+val w1 = createTrainableVariable(math.random, 0.001)
+
+def computationalTree(x: ClosureBasedDualNumber) = {
+  val y0 = ClosureBasedDualNumber.multiply(x, w0)
+  val y1 = ClosureBasedDualNumber.multiply(y0, w1)
+  y1
+}
+\end{lstlisting}
+
+The computational graph of \lstinline{computationalTree} is shown in Fig. \ref{tree}. The arrow direction denotes the dependency between expressions, from arrow tail to arrow head.
+
+\begin{figure}[htbp]
 
   \begin{dot2tex}[dot,mathmode]
-  digraph G {
+  digraph {
     node [shape="circle"]
     rankdir=RL
-    y_0->w
-    y_0->w
-    y_1->y_0
-    y_1->y_0
+
+    y_0 -> x
+    y_0 -> w_0
+    y_1 -> y_0
+    y_1 -> w_1
+    
   }
   \end{dot2tex}
     
-  \caption{Code before preprocessing.}
-  \label{fig:one}
+  \caption{A tree-structured computational graph}
+  \label{tree}
 \end{figure}
 
-xxx
-ff
-ddd
+The closure-based dual number \lstinline{y1} has a closure \lstinline{backward}, which returns \lstinline{SideEffects} that recursively change all \glspl{trainable variable} referenced by the closure.
+
+Note that \lstinline{backward} itself does not perform any side effects. It just collecting all side effects into a \lstinline{UnitContinuation[Unit]}. Fig. \ref{tree backpropagation} shows how the side effects of updating \glspl{trainable variable} are collected.
+
+\begin{figure}[htbp]
+  \newcommand{\x}{$x$}
+  \newcommand{\y}[1]{$y_#1$}
+  \newcommand{\w}[1]{$w_#1$}
+  
+  \begin{sequencediagram}
+    \newthread{Collecting side effects}{Collecting side effects}
+    \newinst{y1}{\y1}
+    \newinst{w1}{\w1}
+    \newinst{y0}{\y0}
+    \newinst{w0}{\w0}
+    \newinst{x}{\x}
+    \begin{call}{Collecting side effects}{\lstinline{y1.backward()}}{y1}{Updating \lstinline{w0.data} and \lstinline{w1.data}}
+        \begin{call}{y1}{\lstinline{y0.backward()}}{y0}{Updating \lstinline{w0.data}}
+          \begin{call}{y0}{\lstinline{x.backward()}}{x}{no-op}
+          \end{call}
+          \begin{call}{y0}{\lstinline{w0.backward()}}{w0}{Updating \lstinline{w0.data}}
+          \end{call}
+        \end{call}
+        \begin{call}{y1}{\lstinline{w1.backward()}}{w1}{Updating \lstinline{w1.data}}
+        \end{call}
+    \end{call}
+  \end{sequencediagram}
+
+  \caption{Backpropagation for a tree-structured computational graph}
+  \label{tree backpropagation}
+\end{figure}
+
+Finally, the collected side effects of \lstinline{UnitContinuation[Unit]} returned from \lstinline{y1.backward} can be performed by a \href{https://javadoc.io/page/com.thoughtworks.future/future_2.11/latest/com/thoughtworks/continuation$$UnitContinuationOps.html#blockingAwait():A}{\lstinline{blockingAwait}} or \href{https://javadoc.io/page/com.thoughtworks.future/future_2.11/latest/com/thoughtworks/continuation$$ContinuationOps.html#onComplete(continue:A=>R):R}{\lstinline{onComplete}} call.
+
+\subsection{Generic Dual Number}
+This closured-based monadic dual number can be generalized to any linear spaces, not only scalar types such as \lstinline{Double}, but also n-dimensional arrays.
+
+The dual number type that we defined in DeepLearning.scala is a generic version of \lstinline{ClosureBasedDualNumber} in Listing \ref{class ClosureBasedDualNumber}. We replaced hard-coded \lstinline{Double} to type parameters \lstinline{Data} and \lstinline{Delta}, as shown in Listing \ref{Tape}.
+
+\begin{lstlisting}[float={htbp},caption={Generic closured-based monadic dual number}, label={Tape}]
+final case class Tape[+Data, -Delta](
+  data: Data,
+  backward: Do[Delta] => UnitContinuation[Unit]
+)
+\end{lstlisting}
+
+\lstinline{Data} and \lstinline{Delta} are usually the same. But they can also be different types. For example, you can create a type whose \lstinline{Data} is a dense n-dimensional array and whose {Delta} is a pair of indices and scalar delta, in order to represent a dense tensor that sparsely updates.
+
+This data structure is similar to Wengert list in traditional reverse mode AD, except our tape is a tree of closures instead of a list.
+
+\subsection{Reference Counted Dual Number}
+
+Although the closured-based dual number approach from Listing \ref{class ClosureBasedDualNumber} to \ref{createTrainableVariable} supports multiple \glspl{trainable variable}, the closure-based computation has a performance issue in the case of diamond dependencies.
+
+Listing \ref{y2} shows a \gls{differentiable function} \lstinline{diamondDependentComputationalGraph} that contains diamond dependencies to some \glspl{differentiable expression} or \glspl{trainable variable}.
+
+\begin{lstlisting}[float={htbp},caption={A diamond dependent \gls{differentiable function}}, label={y2}]
+val w = createTrainableVariable(math.random, 0.001)
+def diamondDependentComputationalGraph(x: ClosureBasedDualNumber) = {
+  val y0 = ClosureBasedDualNumber.multiply(x, w)
+  val y1 = ClosureBasedDualNumber.multiply(y0, y0)
+  val y2 = ClosureBasedDualNumber.multiply(y1, y1)
+  y2
+}
+\end{lstlisting}
+
+The computational graph of \lstinline{diamondDependentComputationalGraph} are shown in Fig. \ref{diamond}.
+
+\begin{figure}[htbp]
+
+  \begin{dot2tex}[dot,mathmode]
+  digraph {
+    node [shape="circle"]
+    rankdir=RL
+    y_0->x
+    y_0->w
+    y_1->y_0
+    y_1->y_0
+    y_2->y_1
+    y_2->y_1
+  }
+  \end{dot2tex}
+
+  \caption{A diamond dependent computational graph}
+  \label{diamond}
+\end{figure}
+
+When \lstinline{y2.backward} is invoked, in order to collect side effects of \lstinline{y2}'s dependencies, \lstinline{y1.backward} will be invoked, twice, and each \lstinline{y1.backward} call will triggers two \lstinline{y0.backward} calls. As a result, for each iteration of backpropagation, \lstinline{y0.backward}, \lstinline{w.backward} and \lstinline{x.backward} are invoked four times, respectively.
+
+The process in \lstinline{y2.backward} is shown in Fig. \ref{diamond backpropagation}.
+
+\begin{figure}[htbp]
+  \newcommand{\x}{$x$}
+  \newcommand{\w}{$w$}
+  \newcommand{\y}[1]{$y_#1$}
+  
+  \begin{sequencediagram}
+    \newthread{Collecting side effects}{Collecting side effects}
+    \newinst{y2}{\y2}
+    \newinst{y1}{\y1}
+    \newinst{y0}{\y0}
+    \newinst{w}{\w}
+    \newinst{x}{\x}
+
+    \newcommand{\callyzero}{
+      \begin{call}{y1}{\lstinline{y0.backward()}}{y0}{}
+        \begin{call}{y0}{\lstinline{x.backward()}}{x}{}
+        \end{call}
+        \begin{call}{y0}{\lstinline{w.backward()}}{w}{}
+        \end{call}
+      \end{call}
+    }
+    
+    \newcommand{\callyone}{
+      \begin{call}{y2}{\lstinline{y1.backward()}}{y1}{}
+        \callyzero
+        \callyzero
+      \end{call}
+    }
+
+    \begin{call}{Collecting side effects}{\lstinline{y2.backward()}}{y2}{}
+      \callyone
+      \callyone
+    \end{call}
+  \end{sequencediagram}
+
+  \caption{Backpropagation for a diamond dependent computational graph}
+  \label{diamond backpropagation}
+\end{figure}
+
+Generally, given $n$ levels of nested diamond dependencies, the computational complexity is $O(2^n)$, which is unacceptable for neural networks that may share common \glspl{differentiable expression}.
+
+We introduced reference counting algorithm for dual numbers, to avoid the exponential time complexity.
+
+The reference counting is managed in a wrapper of \lstinline{ClosureBasedDualNumber}, which has additional \lstinline{acquire} and \lstinline{release} functions.
+
+Each wrapper has two internal states:
+\begin{enumerate*}
+  \item reference counter,
+  \item accumulator of delta.
+\end{enumerate*}
+Respectively, \lstinline{acquire} and \lstinline{release} calls will increase and decrease the reference counter, and \lstinline{backward}calls will cumulate the \lstinline{delta} to the accumulator.
+
+When reference counting algorithm is enabled, \lstinline{backward} is recursive any more. Instead, a wrapper only call \lstinline{backward} of its dependencies when reference counter is decreased to zero. The entire process of backpropagation is shown in Fig. \ref{reference-counted backpropagation}.
+
+\begin{figure}[htbp]
+  \newcommand{\x}{$x$}
+  \newcommand{\w}{$w$}
+  \newcommand{\y}[1]{$y_#1$}
+  
+  \begin{sequencediagram}    
+    \newthread{Collecting side effects}{Collecting side effects}
+    \newinst{y2}{\y2}{}
+    \newinst{y1}{\y1}{}
+    \newinst{y0}{\y0}{}
+    \newinst{w}{\w}{}
+    \newinst{x}{\x}{}
+
+    \begin{call}{Collecting side effects}{\lstinline{y2.backward()}}{y2}{}
+    \end{call}
+    \begin{call}{Collecting side effects}{\lstinline{y2.release() // counter=0}}{y2}{}
+      \begin{call}{y2}{\lstinline{y1.backward()}}{y1}{}
+      \end{call}
+      \begin{call}{y2}{\lstinline{y1.backward()}}{y1}{}
+      \end{call}
+      \begin{call}{y2}{\lstinline{y1.release() // counter=1}}{y1}{}
+      \end{call}
+      \begin{call}{y2}{\lstinline{y1.release() // counter=0}}{y1}{}
+        \begin{call}{y1}{\lstinline{y0.backward()}}{y0}{}
+        \end{call}
+        \begin{call}{y1}{\lstinline{y0.backward()}}{y0}{}
+        \end{call}
+        \begin{call}{y1}{\lstinline{y0.release() // counter=1}}{y0}{}
+        \end{call}
+        \begin{call}{y1}{\lstinline{y0.release() // counter=0}}{y0}{}
+          \begin{call}{y0}{\lstinline{x.backward()}}{x}{}
+          \end{call}
+          \begin{call}{y0}{\lstinline{w.backward()}}{w}{}
+          \end{call}
+          \begin{call}{y0}{\lstinline{x.release()}}{x}{}
+          \end{call}
+          \begin{call}{y0}{\lstinline{w.release()}}{w}{}
+          \end{call}
+        \end{call}
+      \end{call}
+    \end{call}
+  \end{sequencediagram}
+
+  \caption{Backpropagation for a diamond dependent computational graph (with reference counting)}
+  \label{reference-counted backpropagation}
+\end{figure}
+
+This wrapper is implemented as the monadic data type \href{https://javadoc.io/page/com.thoughtworks.raii/asynchronous_2.11/latest/com/thoughtworks/raii/asynchronous$$Do.html}{\lstinline{Do}}, in which the side effects of updating counters and accumulators are monadic control flows.
+
+% \lstinline{Do[Tape]}
+
+\subsection{Backpropagation through Monads}
 
 % returns the side-effects for updating weights according to a coefficient that 
 
@@ -635,7 +881,7 @@ ddd
 
 
 % \begin{lstlisting}
-% case class Tape[Data, PartialDelta](data: Data, backward: PartialDelta => Patch)
+% case class Tape[Data, PartialDelta](data: Data, backward(): PartialDelta => Patch)
 % \end{lstlisting}
 
 

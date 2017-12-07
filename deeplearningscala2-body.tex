@@ -18,7 +18,7 @@ Unfortunately, deep learning frameworks in statically typed languages have not a
 
 Several automatic differentiation libraries \cite{bischof1992adifor,griewank1996algorithm,TapenadeRef13,baydin2015diffsharp} written in Fortran, C++ or F\# support internal DSL via operator overloading but do not support multiple trainable variables.
 
-Other deep learning frameworks in Java or Scala (including Scala binding of C++ frameworks) \cite{intel2016bigdl,skymind2017deeplearning4j,baydin2016hype,chen2017typesafe} do not support automatic differentiation, instead, they only provide their high level computational graph APIs to compose predefined layers into neural networks. As a result, those frameworks do not have the ability to create fine-grained custom algorithms.
+Other deep learning frameworks in Java or Scala (including Scala binding of C++ frameworks) \cite{intel2016bigdl,skymind2017deeplearning4j,baydin2016hype,chen2017typesafe} do not support automatic differentiation, instead, they only provide their high level \gls{computational graph} APIs to compose predefined layers into neural networks. As a result, those frameworks do not have the ability to create fine-grained custom algorithms.
 
 In this paper, we present DeepLearning.scala, which achieves all the above goals, and still get type checked.
 
@@ -120,7 +120,7 @@ This time, it will prints a number closed to 45, because the IQ test robot have 
 The IQ test robot example shows some basic concepts in DeepLearning.scala.
 
 \begin{itemize}
-  \item \lstinline{guessNextNumber}, \lstinline{squareLoss} and \lstinline{linearRegression} are \glspl{differentiable function} that return \glspl{differentiable expression}, which are computational graph nodes that can be evaluated when \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html\#train(differentiable:Differentiable)(implicitmonoid:algebra.ring.MultiplicativeMonoid[DeepLearning.this.Delta]):com.thoughtworks.future.Future[DeepLearning.this.Data]}{\lstinline{train}}ing or \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html\#predict(differentiable:Differentiable):com.thoughtworks.future.Future[DeepLearning.this.Data]}{\lstinline{predict}}ing.
+  \item \lstinline{guessNextNumber}, \lstinline{squareLoss} and \lstinline{linearRegression} are \glspl{differentiable function} that return \glspl{differentiable expression}, which are \gls{computational graph} nodes that can be evaluated when \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html\#train(differentiable:Differentiable)(implicitmonoid:algebra.ring.MultiplicativeMonoid[DeepLearning.this.Delta]):com.thoughtworks.future.Future[DeepLearning.this.Data]}{\lstinline{train}}ing or \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html\#predict(differentiable:Differentiable):com.thoughtworks.future.Future[DeepLearning.this.Data]}{\lstinline{predict}}ing.
   \item \Glspl{differentiable expression} and \glspl{trainable variable} can be used as if they are ordinary non-differentiable values. For example, as shown in Listing \ref{squareLoss}, you can perform scalar subtraction and multiplication between \lstinline{DoubleWeight}, \lstinline{DoubleLayer} and ordinary \lstinline{scala.Double}.
   \item When \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html\#train(differentiable:Differentiable)(implicitmonoid:algebra.ring.MultiplicativeMonoid[DeepLearning.this.Delta]):com.thoughtworks.future.Future[DeepLearning.this.Data]}{\lstinline{train}}ing a \gls{differentiable expression}, it returns a \href{https://javadoc.io/page/com.thoughtworks.future/future_2.11/latest/com/thoughtworks/future$$Future.html}{\lstinline{Future}}, which encapsulates the side-effect of adjusting \glspl{trainable variable} referenced by the \gls{differentiable function}.
   \item If a \gls{differentiable function} invokes another \gls{differentiable function}, then \glspl{trainable variable} trained by one \gls{differentiable function} affect another one. For example, when training the \gls{differentiable function} \lstinline{linearRegression}, The \glspl{trainable variable} \lstinline{weights} and \lstinline{bias} are modified, hence \lstinline{guessNextNumber} automatically gains the ability to \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html\#predict(differentiable:Differentiable):com.thoughtworks.future.Future[DeepLearning.this.Data]}{\lstinline{predict}} correct answers.
@@ -181,9 +181,9 @@ There are three sub-networks in the \lstinline{naiveGatedNet} function. The \lst
 
 However, there is a performance issue in the \lstinline{naiveGatedNet}.
 
-In DeepLearning.scala, all differentiable expressions, including the scalar \lstinline{DoubleLayer} and vectorize \lstinline{INDArrayLayer}, represent lazily evaluated differentiable computational graph nodes, which will not be executed until their predict or train methods are invoked.
+In DeepLearning.scala, all differentiable expressions, including the scalar \lstinline{DoubleLayer} and vectorize \lstinline{INDArrayLayer}, contain some lazily evaluated differentiable \gls{computational graph} nodes, which will not be executed until their predict or train methods are invoked.
 
-So, the two calls to the \lstinline{predict} method in the \lstinline{if} will execute the computational graph of \lstinline{gate} twice. Also \lstinline{naiveGatedNet} itself is a computational graph. There will be a \lstinline{predict} or \lstinline{train} call on \lstinline{naiveGatedNet} from user in the future, which will execute the computational graph one more time. But what's even worse is, \lstinline{input} is a computational graph, too. Along with \lstinline{gate}, it will be evaluated three times, which may contain complex future extracting process.
+So, the two calls to the \lstinline{predict} method in the \lstinline{if} will execute the \gls{computational graph} in \lstinline{gate} twice. Also the \gls{computational graph} in \lstinline{naiveGatedNet} will be executed when users call \lstinline{predict} or \lstinline{train} call \lstinline{naiveGatedNet} in the future. But what's even worse is, \lstinline{input} contains a \gls{computational graph}, too. Along with \lstinline{gate}, it will be evaluated three times, which may contain complex future extracting process.
 
 \subsection{Monadic Control Flow (good)\label{monadic}}
 
@@ -473,26 +473,6 @@ Thanks to Scala's Class Linearization \cite{odersky2017scala} feature, \lstinlin
 
 \section{Implementation\label{implementation}}
 
-Automatic differentiation in a functional framework were considered impossible to be implemented as a library without the ability to reflectively access and
-transform expressions associated with closures \cite{pearlmutter2008reverse}. For example, if you want to create a \lstinline{transform} function that returns the derivative for given function \lstinline{f}:
-
-\begin{lstlisting}[float={htbp},caption={Impossible transform function for automatic differentiation}, label={transform}]
-def transform(f: Double => Double): Double => Double
-\end{lstlisting}
-
-Obviously this \lstinline{transform} function is impossible without the knowledge of the implementation of \lstinline{f}.
-
-Fortunately, in a statically typed language, for type safety, the differentiable types and non-differentiable types should differ. The type signature of our automatic differentiation primitive can be written as Listing \ref{typeSafeTransform}:
-
-\begin{lstlisting}[float={htbp},caption={Type safe transform function for automatic differentiation}, label={typeSafeTransform}]
-def typeSafeTransform(differentiableFunction: Double => DoubleLayer) = { input: Double =>
-  val tape = differentiableFunction(input).forward
-  tape.backward()(Do.now(1.0))
-}
-\end{lstlisting}
-
-Unlike \cite{pearlmutter2008reverse}'s compiler primitive $\overleftarrow{J}$, our \lstinline{typeSafeTransform} can use the additional information stored on \lstinline{DoubleLayer}. As a result, our \lstinline{typeSafeTransform} can be implemented as an ordinary Scala function instead of macros.
-
 The remainder of Section \ref{implementation} is organized as follows.
 % TODO:
 
@@ -638,7 +618,7 @@ def computationalTree(x: ClosureBasedDualNumber) = {
 }
 \end{lstlisting}
 
-The computational graph of \lstinline{computationalTree} is shown in Fig. \ref{tree}. The arrow direction denotes the dependency between expressions, from arrow tail to arrow head.
+The \gls{computational graph} of \lstinline{computationalTree} is shown in Fig. \ref{tree}. The arrow direction denotes the dependency between expressions, from arrow tail to arrow head.
 
 \begin{figure}[htbp]
 
@@ -655,7 +635,7 @@ The computational graph of \lstinline{computationalTree} is shown in Fig. \ref{t
   }
   \end{dot2tex}
     
-  \caption{A tree-structured computational graph}
+  \caption{A tree-structured \gls{computational graph}}
   \label{tree}
 \end{figure}
 
@@ -687,13 +667,13 @@ Note that \lstinline{backward} itself does not perform any side effects. It just
     \end{call}
   \end{sequencediagram}
 
-  \caption{Backpropagation for a tree-structured computational graph}
+  \caption{Backpropagation for a tree-structured \gls{computational graph}}
   \label{tree backpropagation}
 \end{figure}
 
 Finally, the collected side effects of \lstinline{UnitContinuation[Unit]} returned from \lstinline{y1.backward} can be performed by a \href{https://javadoc.io/page/com.thoughtworks.future/future_2.11/latest/com/thoughtworks/continuation$$UnitContinuationOps.html#blockingAwait():A}{\lstinline{blockingAwait}} or \href{https://javadoc.io/page/com.thoughtworks.future/future_2.11/latest/com/thoughtworks/continuation$$ContinuationOps.html#onComplete(continue:A=>R):R}{\lstinline{onComplete}} call.
 
-\subsection{Generic Dual Number}
+\subsection{Generic Tape}
 This closured-based monadic dual number can be generalized to any linear spaces, not only scalar types such as \lstinline{Double}, but also n-dimensional arrays.
 
 The dual number type that we defined in DeepLearning.scala is a generic version of \lstinline{ClosureBasedDualNumber} in Listing \ref{class ClosureBasedDualNumber}. We replaced hard-coded \lstinline{Double} to type parameters \lstinline{Data} and \lstinline{Delta}, as shown in Listing \ref{Tape}.
@@ -709,9 +689,9 @@ final case class Tape[+Data, -Delta](
 
 This data structure is similar to Wengert list in traditional reverse mode AD, except our tape is a tree of closures instead of a list.
 
-\subsection{Reference Counted Dual Number}
+\subsection{Reference Counted Tape}
 
-Although the closured-based dual number approach from Listing \ref{class ClosureBasedDualNumber} to \ref{createTrainableVariable} supports multiple \glspl{trainable variable}, the closure-based computation has a performance issue in the case of diamond dependencies.
+Although the closured-based dual number approach from Listing \ref{class ClosureBasedDualNumber} to \ref{Tape} supports multiple \glspl{trainable variable}, the closure-based computation has a performance issue in the case of diamond dependencies.
 
 Listing \ref{y2} shows a \gls{differentiable function} \lstinline{diamondDependentComputationalGraph} that contains diamond dependencies to some \glspl{differentiable expression} or \glspl{trainable variable}.
 
@@ -725,7 +705,7 @@ def diamondDependentComputationalGraph(x: ClosureBasedDualNumber) = {
 }
 \end{lstlisting}
 
-The computational graph of \lstinline{diamondDependentComputationalGraph} are shown in Fig. \ref{diamond}.
+The \gls{computational graph} of \lstinline{diamondDependentComputationalGraph} are shown in Fig. \ref{diamond}.
 
 \begin{figure}[htbp]
 
@@ -742,7 +722,7 @@ The computational graph of \lstinline{diamondDependentComputationalGraph} are sh
   }
   \end{dot2tex}
 
-  \caption{A diamond dependent computational graph}
+  \caption{A diamond dependent \gls{computational graph}}
   \label{diamond}
 \end{figure}
 
@@ -785,7 +765,7 @@ The process in \lstinline{y2.backward} is shown in Fig. \ref{diamond backpropaga
     \end{call}
   \end{sequencediagram}
 
-  \caption{Backpropagation for a diamond dependent computational graph}
+  \caption{Backpropagation for a diamond dependent \gls{computational graph}}
   \label{diamond backpropagation}
 \end{figure}
 
@@ -847,56 +827,59 @@ When reference counting algorithm is enabled, \lstinline{backward} is recursive 
     \end{call}
   \end{sequencediagram}
 
-  \caption{Backpropagation for a diamond dependent computational graph (with reference counting)}
+  \caption{Backpropagation for a diamond dependent \gls{computational graph} (with reference counting)}
   \label{reference-counted backpropagation}
 \end{figure}
 
-This wrapper is implemented as the monadic data type \href{https://javadoc.io/page/com.thoughtworks.raii/asynchronous_2.11/latest/com/thoughtworks/raii/asynchronous$$Do.html}{\lstinline{Do}}, in which the side effects of updating counters and accumulators are monadic control flows.
+This wrapper is implemented as the monadic data type \href{https://javadoc.io/page/com.thoughtworks.raii/asynchronous_2.11/latest/com/thoughtworks/raii/asynchronous$$Do.html}{\lstinline{Do}}, in which the side effects of updating counters and accumulators are monadic control flows. With the help of \lstinline{Do}, now our computational graphs are modeled in \lstinline{Do[Tape[Data, Delta]]}, which can be created by \lstinline{forward} methods described in Section \ref{monadic}. As mentioned in Section \ref{applicative}, \gls{computational graph} node of binary operations are evaluated in parallel.
 
-% \lstinline{Do[Tape]}
+\subsection{The Overview of an Training Iteration}
 
-\subsection{Backpropagation through Monads}
+In brief, in each iteration, \gls{differentiable function} that contains multiple \glspl{trainable variable} can be trained in the following steps:
 
-% returns the side-effects for updating weights according to a coefficient that 
-
-
-% Those arithmetic operations can be implemented if \lstinline{UpdateWeights} has an additional parameter:
-
- 
-% There are two ways to understand \lstinline{UpdateWeights.plus} and \lstinline{UpdateWeights.multiply} in Listing \ref{UpdateWeights}.
-
-% \begin{enumerate}
-%   \item
+\begin{enumerate}
+  \item Executing the \gls{differentiable function} with a batch of input, to obey a \gls{differentiable expression} (i.e. a subtype of \lstinline{Layer}).
+  \label{obey}
   
-%   \item  
-% \end{enumerate}
- 
+  \item Calling \lstinline{forward} on \gls{differentiable expression} the to build a \gls{computational graph} (i.e. a \lstinline{Do[Tape[Data, Delta]]}), though the reference counter to the \gls{computational graph} is zero at the point.
+  \label{build}
+  
+  \item Performing the \gls{differentiable expression} to build a tape (i.e. a \lstinline{Tape[Data, Delta]}), which contains the result of forward pass and a \lstinline{backward} closure. The reference counter of each nodes in \gls{computational graph} are increased during this step.
+  \label{acquire}
 
+  \item Performing \lstinline{backward} closure of the root node of the \gls{computational graph}. The accumulator of delta of the root node is stored.
 
+  \item Releasing of the root node of the \gls{computational graph}. The reference counter of each nodes in \gls{computational graph} are decreased to zero and \lstinline{backward} closure of each nodes are performed during this step, thus all referenced \glspl{trainable variable} are updated.
+  \label{release}
 
-% we don't need 
-% In order to type-check the \lstinline{PartialDelta}, we 
+\end{enumerate}
 
-% Our approach is 
+Note that steps \ref{obey} and \ref{build} are pure function calls, with no side effects. Steps \ref{acquire} to \ref{release} are monadic control flows, that encapsulate some side effects that will be only performed when unsafe methods \lstinline{blockingAwait} or \lstinline{onComplete} are eventually called.
 
+\section{Benchmark}
 
-% \begin{lstlisting}
-% case class Tape[Data, PartialDelta](data: Data, backward(): PartialDelta => Patch)
-% \end{lstlisting}
-
-
-% As we discussed in Section \ref{introduction}, automatic differentiation algorithms for neural network should support multiple \glspl{trainable variable}. That means our automatic differentiation primitive should return a function that computes all derivatives referenced by \lstinline{differentiableFunction}, instead of the derivative for input.
-
-% % our automatic differentiation primitive
-
-% Hence, Listing \ref{typeSafeTransform} is not enough. We have to change the type signature of our automatic differentiation primitive to:
-
-
-% differentiableFunction
-
-
-% TODO:
 \section{Conclusion}
+
+Automatic differentiation in a functional framework were considered impossible to be implemented as a library without the ability to reflectively access and
+transform expressions associated with closures \cite{pearlmutter2008reverse}. For example, if you want to create a \lstinline{transform} function that returns the derivative for given function \lstinline{f}:
+
+\begin{lstlisting}[float={htbp},caption={Impossible transform function for automatic differentiation}, label={transform}]
+def transform(f: Double => Double): Double => Double
+\end{lstlisting}
+
+Obviously this \lstinline{transform} function is impossible without the knowledge of the implementation of \lstinline{f}.
+
+Fortunately, in a statically typed language, for type safety, the differentiable types and non-differentiable types should differ. The type signature of our automatic differentiation primitive can be written as Listing \ref{typeSafeTransform}:
+
+\begin{lstlisting}[float={htbp},caption={Type safe transform function for automatic differentiation}, label={typeSafeTransform}]
+def typeSafeTransform(differentiableFunction: Double => DoubleLayer) = { input: Double =>
+  val tape = differentiableFunction(input).forward
+  tape.backward()(Do.now(1.0))
+}
+\end{lstlisting}
+
+Unlike \cite{pearlmutter2008reverse}'s compiler primitive $\overleftarrow{J}$, our \lstinline{typeSafeTransform} can use the additional information stored on \lstinline{DoubleLayer}. As a result, our \lstinline{typeSafeTransform} can be implemented as an ordinary Scala function instead of macros.
+
 \subsection{Future Work}
 
 \clearpage

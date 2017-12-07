@@ -38,22 +38,37 @@
 
 \newglossaryentry{plug-in}{
   name={plug-in},
-  description={is a Scala \lstinline{trait} designed to be instantiated by \href{https://javadoc.io/page/com.thoughtworks.feature/factory_2.11/latest/com/thoughtworks/feature/Factory.html}{\lstinline{Factory}}, along with other plug-ins}
+  description={
+    is a Scala \lstinline{trait} designed to be instantiated by \href{https://javadoc.io/page/com.thoughtworks.feature/factory_2.11/latest/com/thoughtworks/feature/Factory.html}{\lstinline{Factory}}, along with other plug-ins
+  }
 }
 
 \newglossaryentry{differentiable function}{
   name={differentiable function},
-  description={is a Scala function that returns a \gls{differentiable expression}. It may represent a loss functions, a neural network or a subset of a neural network (e.g. a dense block in DenseNet\cite{iandola2014densenet})}
+  description={
+    is a Scala function that returns a \gls{differentiable expression}. It may represent a loss functions, a neural network or a subset of a neural network (e.g. a dense block in DenseNet\cite{iandola2014densenet})
+  }
 }
 
 \newglossaryentry{differentiable expression}{
   name={differentiable expression},
-  description={is a differentiable computational graph whose type is \lstinline{DoubleLayer}, \lstinline{FloatLayer}, \lstinline{INDArrayLayer}, or other subtypes of \href{https://javadoc.io/page/com.thoughtworks.deeplearning/plugins-layers_2.11/latest/com/thoughtworks/deeplearning/plugins/Layers$Layer.html}{\lstinline{Layer}}}
+  description={
+    is a composable expression that supports operator overloading, whose type is \lstinline{DoubleLayer}, \lstinline{FloatLayer}, \lstinline{INDArrayLayer}, or other subtypes of \href{https://javadoc.io/page/com.thoughtworks.deeplearning/plugins-layers_2.11/latest/com/thoughtworks/deeplearning/plugins/Layers$Layer.html}{\lstinline{Layer}}. After a differentiable expression is built, it can perform \lstinline{forward} pass to create a differentiable \glspl{computational graph}.
+  }
 }
 
 \newglossaryentry{trainable variable}{
   name={trainable variable},
-  description={is a scalar or vector weight in a mode, whose type is \lstinline{DoubleWeight}, \lstinline{FloatWeight}, \lstinline{INDArrayWeight}, or other subtypes of \href{https://javadoc.io/page/com.thoughtworks.deeplearning/plugins-weights_2.11/latest/com/thoughtworks/deeplearning/plugins/Weights$Weight.html}{\lstinline{Weight}}}  
+  description={
+    is a scalar or vector weight in a model, whose type is \lstinline{DoubleWeight}, \lstinline{FloatWeight}, \lstinline{INDArrayWeight}, or other subtypes of \href{https://javadoc.io/page/com.thoughtworks.deeplearning/plugins-weights_2.11/latest/com/thoughtworks/deeplearning/plugins/Weights$Weight.html}{\lstinline{Weight}}
+  }  
+}
+
+\newglossaryentry{computational graph}{
+  name={computational graph},
+  description={
+    is a monadic data type that produces tapes, whose type is \href{https://javadoc.io/page/com.thoughtworks.raii/asynchronous_2.11/latest/com/thoughtworks/raii/asynchronous$$Do.html}{\lstinline{Do}}\lstinline{[}\href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning$$Tape.html}{\lstinline{Tape[Data, Delta]}}\lstinline{]}
+  }
 }
 
 % Metadata Information

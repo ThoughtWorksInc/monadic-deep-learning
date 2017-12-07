@@ -833,6 +833,8 @@ When reference counting algorithm is enabled, \lstinline{backward} is recursive 
 
 This wrapper is implemented as the monadic data type \href{https://javadoc.io/page/com.thoughtworks.raii/asynchronous_2.11/latest/com/thoughtworks/raii/asynchronous$$Do.html}{\lstinline{Do}}, in which the side effects of updating counters and accumulators are monadic control flows. With the help of \lstinline{Do}, now our computational graphs are modeled in \lstinline{Do[Tape[Data, Delta]]}, which can be created by \lstinline{forward} methods described in Section \ref{monadic}. As mentioned in Section \ref{applicative}, \gls{computational graph} node of binary operations are evaluated in parallel.
 
+In traditional backpropagation implementation, tape is a list, hence both the execution order of backward pass and forward pass must be sequential reverse to each other. By introducing reference counting, the execution order of our backward pass and forward pass do not have to be exactly reverse. As a result, DeepLearning.scala supports out-of-order execution in both forward pass and backward pass, the independent sub-graph can be even executed in parallel.
+
 \subsection{The Overview of an Training Iteration}
 
 In brief, in each iteration, \gls{differentiable function} that contains multiple \glspl{trainable variable} can be trained in the following steps:

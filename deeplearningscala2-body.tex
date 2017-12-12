@@ -18,7 +18,7 @@ Unfortunately, deep learning frameworks in statically typed languages have not a
 
 Several automatic differentiation libraries \cite{bischof1992adifor,griewank1996algorithm,TapenadeRef13,baydin2015diffsharp} written in Fortran, C++ or F\# support internal DSL via operator overloading but do not support multiple trainable variables.
 
-Other deep learning frameworks in Java or Scala (including Scala binding of C++ frameworks) \cite{intel2016bigdl,skymind2017deeplearning4j,baydin2016hype,chen2017typesafe} do not support automatic differentiation, instead, they only provide their high level \gls{computational graph} APIs to compose predefined layers into neural networks. As a result, those frameworks do not have the ability to create fine-grained custom algorithms.
+Other deep learning frameworks in statically typed language (including Scala binding of C++ frameworks) \cite{intel2016bigdl,skymind2017deeplearning4j,baydin2016hype,chen2017typesafe,zhao2017deepdsl} do not support automatic differentiation, instead, they only provide their high level \gls{computational graph} APIs to compose predefined layers into neural networks. As a result, those frameworks do not have the ability to create fine-grained custom algorithms.
 
 In this paper, we present DeepLearning.scala, which achieves all the above goals, and still get type checked.
 
@@ -881,6 +881,7 @@ def typeSafeTransform(differentiableFunction: Double => DoubleLayer) = { input: 
 \end{lstlisting}
 
 Unlike \cite{pearlmutter2008reverse}'s compiler primitive $\overleftarrow{J}$, our \lstinline{typeSafeTransform} can use the additional information stored on \lstinline{DoubleLayer}. As a result, our \lstinline{typeSafeTransform} can be implemented as an ordinary Scala function instead of macros.
+
 
 \subsection{Future Work}
 

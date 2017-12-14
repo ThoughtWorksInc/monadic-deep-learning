@@ -1,4 +1,4 @@
-@default_files = ('deeplearningscala2.tex');
+@default_files = ('paper.tex');
 
 add_cus_dep( 'glo', 'gls', 0, 'makeglo2gls' );
 

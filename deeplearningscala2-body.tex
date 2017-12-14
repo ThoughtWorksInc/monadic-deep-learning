@@ -861,7 +861,7 @@ By introducing reference counting, the execution order of our backward pass and 
 \subsection{The Overview of an Training Iteration}
 \label{training iteration}
 
-In brief, in each iteration, \gls{differentiable function} that contains multiple \glspl{trainable variable} can be trained in the following steps:
+In brief, in each iteration, a \gls{differentiable function} that contains multiple \glspl{trainable variable} can be trained in the following steps:
 
 \begin{enumerate}
   \item Executing the user-defined \gls{differentiable function} with a batch of input, to obey a \gls{differentiable expression} (i.e. a subtype of \lstinline{Layer}).

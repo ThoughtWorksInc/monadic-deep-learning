@@ -484,7 +484,7 @@ In this section, we will introduce the internal data structure used in DeepLearn
 
   \item Section \ref{generic tape} shows the actual data type \lstinline{Tape} in DeepLearning.scala, which is generalized to not only scalar types, but also vector types and any other differentiable types.
 
-  \item Section \ref{reference counted tape} discovered the monadic control flow \lstinline{Do}, which manages the life circle of \lstinline{Tape}s, sharing \lstinline{Tape}s for common computational graph nodes, allowing arbitrary DAG(Directed Acyclic Graph)-structured computational graph.
+  \item Section \ref{reference counted tape} discovered the monadic control flow \lstinline{Do}, which manages the life circle of \lstinline{Tape}s, sharing \lstinline{Tape}s for common \gls{computational graph} nodes, allowing arbitrary DAG(Directed Acyclic Graph)-structured \gls{computational graph}.
 
   \item Section \ref{training iteration} summarizes the entire execution process during a training iteration, showing how the user-defined \glspl{differentiable function} get executed through internal mechanisms \lstinline{Do} and \lstinline{Tape}.
 
@@ -852,7 +852,7 @@ When reference counting algorithm is enabled, \lstinline{backward} is recursive 
   \label{reference-counted backpropagation}
 \end{figure}
 
-This wrapper is implemented as the monadic data type \href{https://javadoc.io/page/com.thoughtworks.raii/asynchronous_2.11/latest/com/thoughtworks/raii/asynchronous%24%24Do.html}{\lstinline{Do}}, in which the side effects of updating counters and accumulators are monadic control flows. With the help of \lstinline{Do}, now our computational graphs are modeled in \lstinline{Do[Tape[Data, Delta]]}, which can be created by \lstinline{forward} methods described in Section \ref{monadic}. As mentioned in Section \ref{applicative}, \gls{computational graph} node of binary operations are evaluated in parallel.
+This wrapper is implemented as the monadic data type \href{https://javadoc.io/page/com.thoughtworks.raii/asynchronous_2.11/latest/com/thoughtworks/raii/asynchronous%24%24Do.html}{\lstinline{Do}}, in which the side effects of updating counters and accumulators are monadic control flows. With the help of \lstinline{Do}, now our \glspl{computational graph} are modeled in \lstinline{Do[Tape[Data, Delta]]}, which can be created by \lstinline{forward} methods described in Section \ref{monadic}. As mentioned in Section \ref{applicative}, \gls{computational graph} node of binary operations are evaluated in parallel.
 
 In traditional backpropagation implementation, tape is a list, hence both the execution order of backward pass and forward pass must be sequential reverse to each other. Even previous attempt of closure-based tape\cite{pearlmutter2008reverse} still requires conversion to sequential expressions of A-normal form\cite{sabry1993reasoning}. 
 
@@ -882,7 +882,22 @@ In brief, in each iteration, \gls{differentiable function} that contains multipl
 
 Note that steps \ref{obey} and \ref{build} are pure function calls, with no side effects. Steps \ref{acquire} to \ref{release} are monadic control flows, which encapsulate some side effects that will be performed only when an unsafe method \lstinline{blockingAwait} or \lstinline{onComplete} is eventually called.
 
-% TODO: \section{Future Work}
+\section{Future Work}
+
+Neural networks created in DeepLearning.scala are \glspl{differentiable function}, which contain expressions of differentiable types, which are any types that has their corresponding \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html}{\lstinline{DeepLearning}} type classes. The built-in \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html}{\lstinline{DeepLearning}} type classes witness the following nine differentiable types:
+
+\begin{table}[htbp]
+  \caption{Built-in Differentiable Types}
+  \label{differentiable types}
+  \begin{tabular}{lll}
+    \toprule
+    non-trainable value & \gls{trainable variable} & \gls{differentiable expression} \\ \midrule
+    Double & DoubleWeight & DoubleLayer \\
+    Float & FloatWeight & FloatLayer \\
+    INDArray & INDArrayWeight & INDArrayLayer \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 \section{Discussion}
 
@@ -893,15 +908,15 @@ DeepLearning.scala is an unique library among all deep learning frameworks. Our 
 There were two different mechanisms in state-of-the-art deep learning frameworks:
 Define-and-Run v.s. Define-by-Run.
 
-State-of-the-art Define-and-Run frameworks \cite{collobert2008torch,bergstra2010theano,jia2014caffe,chen2015mxnet,abadi2016tensorflow,intel2016bigdl,skymind2017deeplearning4j} allows users to create computational graphs, which are immutable Abstract Syntax Trees (ASTs) of some object languages which can be evaluated by the framework runtime. Define-and-Run frameworks can schedule computational graph to multiple CPU, GPU or other devices. However, the object languages have bad interoperability with the metalanguage. For example, a DeepLearning4j user cannot use Java control flows nor call Java native methods in neural networks.
+State-of-the-art Define-and-Run frameworks \cite{collobert2008torch,bergstra2010theano,jia2014caffe,chen2015mxnet,abadi2016tensorflow,intel2016bigdl,skymind2017deeplearning4j} allows users to create \glspl{computational graph}, which are immutable Abstract Syntax Trees (ASTs) of some object languages which can be evaluated by the framework runtime. Define-and-Run frameworks can schedule \gls{computational graph} to multiple CPU, GPU or other devices. However, the object languages have bad interoperability with the metalanguage. For example, a DeepLearning4j user cannot use Java control flows nor call Java native methods in neural networks.
 
-State-of-the-art Define-by-Run frameworks \cite{tokui2015chainer,neubig2017dynet,google2017eager,paszke2017pytorch} eagerly executes actual forward pass calculation in user written code, and, at the same time, generates the reverse computational graph for later backward pass. Unlike Define-and-Run frameworks, Define-by-Run frameworks have good interoperability with the hosting language. Control flows and native function calls can be easily used during the execution of neural networks. However, Define-by-Run frameworks loses control of the execution, thus operations in an iteration cannot be scheduled on different devices. And these Define-and-Run frameworks tend to store states and perform side effects when defining neural network structures, which makes this mechanism unable to implement in a pure functional flavor.
+State-of-the-art Define-by-Run frameworks \cite{tokui2015chainer,neubig2017dynet,google2017eager,paszke2017pytorch} eagerly executes actual forward pass calculation in user written code, and, at the same time, generates the internal states for running backward pass. Unlike Define-and-Run frameworks, Define-by-Run frameworks have good interoperability with the hosting language. Control flows and native function calls can be easily used during the execution of neural networks. However, Define-by-Run frameworks loses control of the execution, thus operations in an iteration cannot be scheduled on different devices. And these Define-and-Run frameworks tend to store states and perform side effects when defining neural network structures, which makes this mechanism unable to implement in a pure functional flavor.
 
 We discovered the third mechanism of monadic deep learning. Neural networks in DeepLearning.scala are immutable and schedulable like in Define-and-Run frameworks, and interoperable with Scala like in Define-by-Run frameworks.
 
 \subsection{AD in a Functional Library}
 
-Reverse mode AD in a functional library were previously considered impossible to be implemented without the ability to reflectively access and transform expressions associated with closures \cite{pearlmutter2008reverse}. For example, if you want to create a \lstinline{transform} function that returns the derivative for given function \lstinline{f}:
+Reverse mode AD in a functional library was previously considered impossible to be implemented without the ability to reflectively access and transform expressions associated with closures \cite{pearlmutter2008reverse}. For example, if you want to create a \lstinline{transform} function that returns the derivative for given function \lstinline{f}:
 
 \begin{lstlisting}[float={htbp},caption={Impossible transform function for AD}, label={transform}]
 def transform(f: Double => Double): Double => Double
@@ -918,7 +933,7 @@ def typeSafeTransform(f: Double => DoubleLayer) = { input: Double =>
 }
 \end{lstlisting}
 
-Unlike \cite{pearlmutter2008reverse}'s compiler primitive $\overleftarrow{J}$, our \lstinline{typeSafeTransform} can use the additional methods on \lstinline{DoubleLayer}. As a result, our \lstinline{typeSafeTransform} can be implemented as an ordinary Scala function instead of a compiler primitive or a macro.
+Unlike \cite{pearlmutter2008reverse}'s compiler primitive $\overleftarrow{J}$, our \lstinline{typeSafeTransform} can use the additional methods on \lstinline{DoubleLayer}. As a result, our \lstinline{typeSafeTransform} can be implemented without reflection, as an ordinary Scala function, instead of a compiler primitive or a macro.
 
 \section{Conclusion}
 

@@ -7,7 +7,7 @@
 \bibliographystyle{ACM-Reference-Format}
 \citestyle{acmauthoryear}
 
-% \usepackage{booktabs} % For formal tables
+\usepackage{booktabs} % For formal tables
 \usepackage{pgf-umlsd}
 
 \usepackage[ruled]{algorithm2e} % For algorithms
@@ -70,7 +70,7 @@
 \newglossaryentry{computational graph}{
   name={computational graph},
   description={
-    is a monadic data type that produces tapes, whose type is \href{https://javadoc.io/page/com.thoughtworks.raii/asynchronous_2.11/latest/com/thoughtworks/raii/asynchronous$$Do.html}{\lstinline{Do}}\lstinline{[}\href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning$$Tape.html}{\lstinline{Tape[Data, Delta]}}\lstinline{]}
+    is an asynchronous monadic data type that manages the life cycle of tapes, whose type is \href{https://javadoc.io/page/com.thoughtworks.raii/asynchronous_2.11/latest/com/thoughtworks/raii/asynchronous$$Do.html}{\lstinline{Do}}\lstinline{[}\href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning$$Tape.html}{\lstinline{Tape[Data, Delta]}}\lstinline{]}
   }
 }
 

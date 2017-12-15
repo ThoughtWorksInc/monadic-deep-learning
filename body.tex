@@ -257,7 +257,7 @@ def parallelByDefault(a: INDArrayLayer, b: INDArrayLayer, c: INDArrayLayer, d: I
 
 By combining both applicative functors and monads, DeepLearning.scala supports dynamic neural network and still allows the independent parts of the neural network to run in parallel. In addition, the backward() pass of differentiable functions built from parallel applicative functors or built-in vector binary operators will be executed in parallel, too.
 
-\section{Polymorphic Differentiable Functions}
+\section{Ad Hoc Polymorphic Differentiable Functions}
 \label{Ad Hoc Polymorphism}
 
 Neural networks created in DeepLearning.scala are \glspl{differentiable function}, which contain expressions of differentiable types, which are any types that has their corresponding \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html}{\lstinline{DeepLearning}} type classes, including:

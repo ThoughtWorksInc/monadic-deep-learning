@@ -703,7 +703,7 @@ In traditional backpropagation implementation, tape is a list, hence both the ex
 
 By introducing reference counting, the execution order of our backward pass and forward pass do not have to be exactly reverse, hence the conversion to A-normal form becomes unnecessary. As a result, DeepLearning.scala supports out-of-order execution in both forward pass and backward pass, the independent sub-graph can be even executed in parallel.
 
-\subsection{The Overview of an Training Iteration}
+\subsection{The Overview of a Training Iteration}
 \label{training iteration}
 
 In brief, in each iteration, a \gls{differentiable function} that contains multiple \glspl{trainable variable} can be trained in the following steps:

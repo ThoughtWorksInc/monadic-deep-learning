@@ -28,7 +28,6 @@
 % \usepackage{markdown}
 
 \usepackage{color}
-% \usepackage[pdf]{graphviz}
 \usepackage{dot2texi}
 \usepackage{tikz}
 \usetikzlibrary{shapes,arrows}
@@ -140,7 +139,6 @@ We solved this problem in DeepLearning.scala 2.0. Our contributions are:
   \item We discovered a novel approach to perform automatic differentiation in reverse mode for statically typed functions that contain multiple \glspl{trainable variable}.
   \item We designed a set of monads and monad transformers, which allow users to create monadic expressions that represent dynamic neural networks.
   \item Along with these monads, we provide some applicative functors, to perform multiple calculations in parallel.
-  \item We solved the harder version of Expression Problem, which allows users to create \glspl{plug-in} that not only add new types and operations, but also modify existing types and operations.
 \end{itemize}
 
 Together of these features, users of DeepLearning.scala are able to create complex neural networks in an intuitive and concise way, and still keep type safe.
@@ -229,7 +227,7 @@ Together of these features, users of DeepLearning.scala are able to create compl
 %
 
 
-\keywords{type class, path-dependent type, monad, expression problem, scala}
+\keywords{type class, path-dependent type, monad, scala}
 
 
 

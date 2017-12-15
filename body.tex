@@ -550,7 +550,7 @@ final case class Tape[+Data, -Delta](
 )
 \end{lstlisting}
 
-\lstinline{Data} and \lstinline{Delta} are usually the same, but they can also be different types. For example, you can create a type whose \lstinline{Data} is a dense n-dimensional array and whose {Delta} is a pair of indices and scalar delta, representing a dense tensor that sparsely updates.
+\lstinline{Data} and \lstinline{Delta} are usually the same, but they can also be different types. For example, you can create a type whose \lstinline{Data} is a dense n-dimensional array and whose {Delta} is a pair of index and scalar, representing a dense tensor that sparsely updates.
 
 This data structure is similar to Wengert list in traditional reverse mode AD, except our tape is a tree of closures instead of a list.
 
@@ -731,7 +731,7 @@ Note that step~\ref{obey} and step~\ref{build} are pure function calls, with no 
 
 \subsection{New Back-end}
 Currently, DeepLearning.scala 2.0's built-in differentiable vector expression type \lstinline{INDArrayLayer} is based on nd4j's \lstinline{INDArray}  \cite{skymind2017nd4j}.
-As described in Section~\ref{training iteration}, in each training iteration, for each \gls{computational graph} node, \lstinline{forward} and \lstinline{backward} operations are performed, which internally call some methods on \lstinline{INDArray}, resulting GPU kernel executions if nd4j's CUDA runtime is used. These nd4j operations are slow because:
+As described in Section~\ref{training iteration}, in each training iteration, for each \gls{computational graph} node, \lstinline{forward} and \lstinline{backward} operations are performed, which internally call some methods on \lstinline{INDArray}, resulting GPU kernel executions if nd4j's CUDA runtime is used. These nd4j operations have computational performance because:
 \begin{enumerate*}
   \item Some operations \footnote{\lstinline{INDArray.broadcast} for example} are extremely slow;
   \item Enqueuing a kernel is relatively expensive.

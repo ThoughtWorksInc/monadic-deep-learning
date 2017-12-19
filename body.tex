@@ -651,7 +651,7 @@ Each wrapper has two internal states:
   \item reference counter,
   \item accumulator of delta.
 \end{enumerate*}
-Respectively, \lstinline{acquire} and \lstinline{release} calls will increase and decrease the reference counter, and \lstinline{backward}calls will cumulate the \lstinline{delta} to the accumulator.
+Respectively, \lstinline{acquire} and \lstinline{release} calls will increase and decrease the reference counter, and \lstinline{backward} calls will cumulate the \lstinline{delta} to the accumulator.
 
 When reference counting algorithm is enabled, \lstinline{backward} is recursive any more. Instead, a wrapper only call \lstinline{backward} of its dependencies when reference counter is decreased to zero. The entire process of backpropagation is shown in Figure~\ref{reference-counted backpropagation}.
 
@@ -706,7 +706,7 @@ This wrapper is implemented as the monadic data type \href{https://javadoc.io/pa
 
 In traditional backpropagation implementation, tape is a list, hence both the execution order of backward pass and forward pass must be sequential reverse to each other. Even previous attempt of closure-based tape\cite{pearlmutter2008reverse} still requires conversion to sequential expressions of A-normal form\cite{sabry1993reasoning}. 
 
-By introducing reference counting, the execution order of our backward pass and forward pass do not have to be exactly reverse, hence the conversion to A-normal form becomes unnecessary. As a result, DeepLearning.scala supports out-of-order execution in both forward pass and backward pass, the independent sub-graph can be even executed in parallel.
+By introducing reference counting, the execution order of our backward pass and forward pass do not have to be exactly reverse, hence the conversion to A-normal form becomes unnecessary. As a result, DeepLearning.scala supports out-of-order execution in both forward pass and backward pass, in which the independent sub-graph can be even executed in parallel.
 
 \subsection{The Overview of a Training Iteration}
 \label{training iteration}
@@ -720,7 +720,7 @@ In brief, in each iteration, a \gls{differentiable function} that contains multi
   \item Calling \lstinline{forward} on \gls{differentiable expression} the to build a \gls{computational graph} (i.e. a \lstinline{Do[Tape[Data, Delta]]}), though the reference counter to the \gls{computational graph} is zero at the point.
   \label{build}
   
-  \item Performing the \lstinline{forward} pass of \gls{differentiable expression} to build a tape (i.e. a \lstinline{Tape[Data, Delta]}), which contains the result of forward pass and a \lstinline{backward} closure. The reference counter of each node in \gls{computational graph} are increased during this step.
+  \item Performing the \lstinline{forward} pass of \gls{differentiable expression} to build a tape (i.e. a \lstinline{Tape[Data, Delta]}), which contains a pair of the result of forward pass and a \lstinline{backward} closure. The reference counter of each node in \gls{computational graph} are increased during this step.
   \label{acquire}
 
   \item Performing \lstinline{backward} closure of the root node of the \gls{computational graph}. The accumulator of delta of the root node is stored.
@@ -736,7 +736,7 @@ Note that step~\ref{obey} and step~\ref{build} are pure function calls, with no 
 
 \subsection{New Back-end}
 Currently, DeepLearning.scala 2.0's built-in differentiable vector expression type \lstinline{INDArrayLayer} is based on nd4j's \lstinline{INDArray}  \cite{skymind2017nd4j}.
-As described in Section~\ref{training iteration}, in each training iteration, for each \gls{computational graph} node, \lstinline{forward} and \lstinline{backward} operations are performed, which internally call some methods on \lstinline{INDArray}, resulting GPU kernel executions if nd4j's CUDA runtime is used. These nd4j operations have computational performance because:
+As described in Section~\ref{training iteration}, in each training iteration, for each \gls{computational graph} node, \lstinline{forward} and \lstinline{backward} operations are performed, which internally call some methods on \lstinline{INDArray}, resulting GPU kernel executions if nd4j's CUDA runtime is used. These nd4j operations have a bad computational performance because:
 \begin{enumerate*}
   \item Some operations \footnote{\lstinline{INDArray.broadcast} for example} are extremely slow;
   \item Enqueuing a kernel is relatively expensive.

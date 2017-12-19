@@ -1,4 +1,5 @@
-\section{Introduction \label{introduction}}
+\section{Introduction}
+\label{introduction}
 
 Backpropagation \cite{rumelhart1985learning} is the key feature in many deep learning frameworks. Combining with other optimization algorithms \cite{kingma2014adam, zeiler2012adadelta,duchi2011adaptive}, deep learning frameworks change the values of trainable variables in neural networks during iterations, producing a model of knowledge learnt from training data.
 
@@ -22,7 +23,8 @@ Other deep learning frameworks in statically typed language (including Scala bin
 
 In this paper, we present DeepLearning.scala, which achieves all the above goals, and still get type checked.
 
-\section{Basic Concepts\label{concepts}}
+\section{Basic Concepts}
+\label{concepts}
 
 For example, suppose we are building a robot for answering questions in IQ test like this:
 
@@ -162,7 +164,8 @@ The control flow of gated network that we want to build is described in Function
 
 In DeepLearning.scala, there are three different approaches to implement the gated network. Examples of these approaches are introduced in following Section~\ref{eager}, Section~\ref{monadic}, and Section~\ref{applicative}.
 
-\subsection{Eager Execution (bad)\label{eager}}
+\subsection{Eager Execution (bad)}
+\label{eager}
 
 An obvious approach to create the gated network is eagerly executing the \lstinline{gate}, shown in Listing~\ref{naiveGatedNet}:
 
@@ -185,7 +188,8 @@ In DeepLearning.scala, all differentiable expressions, including the scalar \lst
 
 So, the two calls to the \lstinline{predict} method in the \lstinline{if} will execute the \gls{computational graph} in \lstinline{gate} twice. Also the \gls{computational graph} in \lstinline{naiveGatedNet} will be executed when users call \lstinline{predict} or \lstinline{train} call \lstinline{naiveGatedNet} in the future. But what's even worse is, \lstinline{input} contains a \gls{computational graph}, too. Along with \lstinline{gate}, it will be evaluated three times, which may contain complex future extracting process.
 
-\subsection{Monadic Control Flow (good)\label{monadic}}
+\subsection{Monadic Control Flow (good)}
+\label{monadic}
 
 Ideally, the calls to \lstinline{predict} should be avoided in differentiable functions. The recommended approach to create a dynamic neural network is using \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html#forward(differentiable:Differentiable):com.thoughtworks.raii.asynchronous.Do[com.thoughtworks.deeplearning.DeepLearning.Tape[DeepLearning.this.Data,DeepLearning.this.Delta]]}{\lstinline{forward}}, which returns a monadic value of \lstinline{Do[Tape[Data, Delta]]}, which can be used in a monadic control flow via Scalaz \cite{kenji2017scalaz}'s type classes \cite{oliveira2010type} \lstinline{Monad} and \lstinline{Applicative}.
 
@@ -216,7 +220,8 @@ The \lstinline{monadicGatedNet} represents a dynamic neural network, since each 
 However, \lstinline{flatMap} prevents additional optimization, too.
 \lstinline{scores._2.forward} have to wait for \lstinline{scores._1.forward}'s result, even if the two operations are logically independent.
 
-\subsection{Parallel Applicative Control Flow + Sequential Monadic Control Flow (best)\label{applicative}}
+\subsection{Parallel Applicative Control Flow + Sequential Monadic Control Flow (best)}
+\label{applicative}
 
 Ideally, the independent operations \lstinline{scores._1.forward} and \lstinline{scores._2.forward} should run in parallel. This can be done by tagging \lstinline{Do} as \href{https://javadoc.io/page/org.scalaz/scalaz_2.11/latest/scalaz/Tags%24%24Parallel.html}{\lstinline{Parallel}}, and use \href{https://javadoc.io/page/org.scalaz/scalaz_2.11/latest/scalaz/Applicative.html#tuple2[A,B](fa:=>F[A],fb:=>F[B]):F[(A,B)]}{\lstinline{scalaz.Applicative.tuple2}} instead of \lstinline{flatMap} (Listing~\ref{applicativeMonadicGatedNet}).
 
@@ -760,7 +765,7 @@ Define-and-Run v.s. Define-by-Run.
 
 State-of-the-art Define-and-Run frameworks \cite{collobert2008torch,bergstra2010theano,jia2014caffe,chen2015mxnet,abadi2016tensorflow,intel2016bigdl,skymind2017deeplearning4j} allows users to create \glspl{computational graph}, which are immutable Abstract Syntax Trees (ASTs) of some object languages which can be evaluated by the framework runtime. Define-and-Run frameworks can schedule \gls{computational graph} to multiple CPU, GPU or other devices. However, the object languages have bad interoperability with the metalanguage. For example, a DeepLearning4j user cannot use Java control flows nor call Java native methods in neural networks.
 
-State-of-the-art Define-by-Run frameworks \cite{tokui2015chainer,neubig2017dynet,google2017eager,paszke2017pytorch} eagerly executes actual forward pass calculation in user written code, and, at the same time, generates the internal states for running backward pass. Unlike Define-and-Run frameworks, Define-by-Run frameworks have good interoperability with the hosting language. Control flows and native function calls can be easily used during the execution of neural networks. However, Define-by-Run frameworks loses control of the execution, thus operations in an iteration cannot be scheduled on different devices. And these Define-and-Run frameworks tend to store states and perform side effects when defining neural network structures, which makes this mechanism unable to implement in a pure functional flavor.
+State-of-the-art Define-by-Run frameworks \cite{tokui2015chainer,neubig2017dynet,google2017eager,paszke2017pytorch} eagerly executes actual forward pass calculation in user written code, and, at the same time, generates the internal states for running backward pass. Unlike Define-and-Run frameworks, Define-by-Run frameworks have good interoperability with the hosting language. Control flows and native function calls can be easily used during the execution of neural networks. However, Define-by-Run frameworks loses control of the execution, thus operations in an iteration cannot be scheduled on multiple different devices. And these Define-and-Run frameworks tend to store states and perform side effects when defining neural network structures, which makes this mechanism unable to implement in a pure functional flavor.
 
 We discovered the third mechanism of monadic deep learning. Neural networks in DeepLearning.scala are immutable and schedulable like in Define-and-Run frameworks, and interoperable with Scala like in Define-by-Run frameworks.
 

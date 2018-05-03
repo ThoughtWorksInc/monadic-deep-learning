@@ -60,7 +60,7 @@ Unlike \cite{chen2017typesafe}'s special tensor type, our tensor can be simply t
 The \lstinline{weights} and \lstinline{bias} referenced by \lstinline{guessNextNumber} must be initialized first:
 
 \begin{lstlisting}[float={h t b p},caption={Weight initialization}]
-val weights: Seq[DoubleWeight] = Stream.continually(DoubleWeight(math.random))
+val weightsw: Seq[DoubleWeight] = Stream.continually(DoubleWeight(math.random))
 val bias: DoubleWeight = DoubleWeight(math.random)
 \end{lstlisting}
 

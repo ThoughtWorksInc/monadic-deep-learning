@@ -782,9 +782,9 @@ Obviously this \lstinline{transform} function is impossible without the knowledg
 Fortunately, in a statically typed language, the differentiable types and non-differentiable types should differ for type safety. The type signature of our AD function can use more powerful type \lstinline{DoubleLayer} instead of \lstinline{Double}. It can be written as Listing~\ref{typeSafeTransform}:
 
 \begin{lstlisting}[float={h t b p},caption={Type safe transform function for AD}, label={typeSafeTransform}]
-def typeSafeTransform(f: Double => DoubleLayer) = { input: Double =>
+def typeSafeTransform(f: Double => DoubleLayer): Double => Future[Unit] = { input: Double =>
   val tape = f(input).forward
-  tape.backward()(Do.now(1.0))
+  tape.backward(Do.now(1.0)).blockingAwait
 }
 \end{lstlisting}
 

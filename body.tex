@@ -9,19 +9,21 @@ Backpropagation can be seen as a special-purpose Automatic Differentiation (AD) 
 
   \item[Reverse mode] All these deep learning frameworks perform reverse mode AD instead of forward mode, as forward mode AD does not scale well for deep neural networks.
 
-  \item[Multiple trainable variable] Neural networks are composed of multiple layers. Each layer contains their own trainable variables. All these deep learning frameworks are able to calculus the derivatives of all trainable variables at once for one training data batch.
+  \item[Multiple trainable variable] Neural networks are composed of multiple layers. Each layer contains their own trainable variables. All these deep learning frameworks are able to calculate the derivatives of all trainable variables at once for one training data batch.
 
-  \item[Internal DSL \cite{fowler2010domain}] All these deep learning frameworks are libraries that provide an Internal DSL, allowing users to create their differentiable functions in Python or Lua from the similar expression as creating ordinary non-differentiable functions. Since these frameworks do not require external language, models created by them can be easy integrated into a larger application alone with higher-level configurations \cite{chollet2015keras} or ETL (Extract, Transform and Load) process.
+  \item[Internal DSL \cite{fowler2010domain}] All these deep learning frameworks are libraries that provide an Internal DSL, allowing users to create their differentiable functions in Python or Lua from similar expressions as creating ordinary non-differentiable functions. Since these frameworks do not require external language, models created by them can be easy integrated into a larger application alone with higher-level configurations \cite{chollet2015keras} or ETL (Extract, Transform and Load) process.
 
 \end{description}
 
 Unfortunately, deep learning frameworks in statically typed languages have not achieved the above goals until 2017.
 
-Several AD libraries \cite{bischof1992adifor,griewank1996algorithm,TapenadeRef13,baydin2015diffsharp} written in Fortran, C++ or F\# support AD via operator overloading or external preprocessor but do not support multiple trainable variables.
+Several AD libraries \cite{bischof1992adifor,griewank1996algorithm,TapenadeRef13,baydin2015diffsharp} written in Fortran, C++ or F\# support AD via operator overloading or external preprocessor but do not scale to deep neural networks, either due to using forward mode or lacking the feature of multiple trainable variables.
 
-Other deep learning frameworks in statically typed language (including Scala binding of C++ frameworks) \cite{intel2016bigdl,skymind2017deeplearning4j,baydin2016hype,chen2017typesafe,zhao2017deepdsl} do not support AD, instead, they only provide their high level \gls{computational graph} APIs to compose predefined layers into neural networks. As a result, those frameworks do not have the ability to create fine-grained custom algorithms.
+Other deep learning frameworks in statically typed languages (including Scala binding of C++ frameworks) \cite{intel2016bigdl,skymind2017deeplearning4j,baydin2016hype,chen2017typesafe,zhao2017deepdsl} do not support AD, instead, they only provide their high level \gls{computational graph} APIs to compose predefined layers into neural networks. As a result, those frameworks do not have the ability to create fine-grained custom algorithms.
 
-In this paper, we present DeepLearning.scala, which achieves all the above goals, and still get type checked.
+How to type a deep neural network as an AD control flow in a static typed language is still an open problem.
+
+In this paper, we present DeepLearning.scala, which is the first static typed implementation that achieves all the above goals for deep neural networks. Our approach is based on functional programming constructs, thus can be ported to Haskell, Idris and other statically typed functional programming languages.
 
 \section{Basic Concepts}
 \label{concepts}
@@ -36,9 +38,13 @@ For example, suppose we are building a robot for answering questions in IQ test 
   The answer is 12.
 \end{quote}
 
-In DeepLearning.scala, the robot can be implemented as a \lstinline{guessNextNumber} function of the following signature\footnote{The code examples from Listing~\ref{guessNextNumber} to Listing~\ref{predict_trained} do not contain necessary \lstinline{import} and configurations. For a runnable IQ test robot example backed by ND4J \cite{skymind2017nd4j}, see \href{http://deeplearning.thoughtworks.school/demo/GettingStarted.html}{Getting Started documentation on DeepLearning.scala website}.}:
+In DeepLearning.scala, the robot can be implemented as a \lstinline{guessNextNumber} function as following\footnote{The code examples from Listing~\ref{guessNextNumber} to Listing~\ref{predict_trained} do not contain necessary \lstinline{import} and configurations. For a runnable IQ test robot example backed by ND4J \cite{skymind2017nd4j}, see \href{http://deeplearning.thoughtworks.school/demo/GettingStarted.html}{Getting Started documentation on DeepLearning.scala website}.}:
 
 \begin{lstlisting}[float={h t b p},caption={The differentiable matrix multiplication implemented by \lstinline{map}/\lstinline{reduce}},label={guessNextNumber}]
+// Weight initialization
+val weights: Seq[DoubleWeight] = Stream.continually(DoubleWeight(math.random))
+val bias: DoubleWeight = DoubleWeight(math.random)
+
 def guessNextNumber(question: Seq[Double]): DoubleLayer = {
   // Perform a matrix multiplication between question and weights
   (question zip weights).map {
@@ -57,16 +63,59 @@ Unlike \cite{chen2017typesafe}'s special tensor type, our tensor can be simply t
 \end{enumerate*}
 }
 
-The \lstinline{weights} and \lstinline{bias} referenced by \lstinline{guessNextNumber} must be initialized first:
+The return value of \lstinline{guessNextNumber}, along with temporary variables in \lstinline{guessNextNumber}, are \lstinline{DoubleLayer}s, which are \glspl{differentiable expression}.
 
-\begin{lstlisting}[float={h t b p},caption={Weight initialization}]
-val weightsw: Seq[DoubleWeight] = Stream.continually(DoubleWeight(math.random))
-val bias: DoubleWeight = DoubleWeight(math.random)
+The \lstinline{weights} and \lstinline{bias} contains some \lstinline{DoubleWeight} referenced by \lstinline{guessNextNumber} must be initialized first. Those are \glspl{trainable variable}.
+
+From the user's point of view, both \lstinline{DoubleLayer} and \lstinline{DoubleWeight} are opacity types similar to ordinary \lstinline{scala.Double}. Most of operators of \lstinline{scala.Double} are also available on \lstinline{DoubleLayer}  and \lstinline{DoubleWeight}, except those operators are differentiable. For now, you can think of the type signature of multiplication operator as if the Listing~\ref{hypothetical differentiable types}, and we will reveal the real type signature of \lstinline{*} in Section~\ref{Ad Hoc Polymorphism}.
+
+\begin{lstlisting}[float={h t b p},caption={The hypothetical type signature of multiplication operator for \lstinline{DoubleLayer} and \lstinline{DoubleWeight}},label={hypothetical differentiable types}]
+trait DoubleLayer {
+  def *(rhs: Double): DoubleLayer
+  def *(rhs: DoubleLayer): DoubleLayer
+  def *(rhs: DoubleWeight): DoubleLayer
+}
+trait DoubleWeight {
+  def *(rhs: Double): DoubleLayer
+  def *(rhs: DoubleLayer): DoubleLayer
+  def *(rhs: DoubleWeight): DoubleLayer
+}
 \end{lstlisting}
 
-Then the robot try to answer IQ test questions like calling an ordinary function:
+Table~\ref{differentiable types} lists DeepLearning.scala built-in differentiable types other than \lstinline{DoubleLayer} and \lstinline{DoubleWeight}.
 
-\begin{lstlisting}[float={h t b p},caption={Inference on an untrained model}]
+\begin{table}[h t b p]
+  \caption{Built-in Differentiable Types}
+  \label{differentiable types}
+  \begin{tabular}{c l l l}
+    \toprule
+    & non-trainable value & \gls{trainable variable} & \gls{differentiable expression} \\
+    \midrule
+    single-precision scalar & \href{https://www.scala-lang.org/api/current/scala/Double.html}{\lstinline$Double$} & \href{https://javadoc.io/page/com.thoughtworks.deeplearning/plugins-doubleweights_2.11/latest/com/thoughtworks/deeplearning/plugins/DoubleWeights%24DoubleWeight.html}{\lstinline$DoubleWeight$} & \href{https://javadoc.io/page/com.thoughtworks.deeplearning/plugins-doublelayers_2.11/latest/com/thoughtworks/deeplearning/plugins/DoubleLayers%24DoubleLayer.html}{\lstinline$DoubleLayer$} \\
+    double-precision scalar & \href{https://www.scala-lang.org/api/current/scala/Float.html}{\lstinline$Float$} & \href{https://javadoc.io/page/com.thoughtworks.deeplearning/plugins-floatweights_2.11/latest/com/thoughtworks/deeplearning/plugins/FloatWeights%24FloatWeight.html}{\lstinline$FloatWeight$} & \href{https://javadoc.io/page/com.thoughtworks.deeplearning/plugins-floatlayers_2.11/latest/com/thoughtworks/deeplearning/plugins/FloatLayers%24FloatLayer.html}{\lstinline$FloatLayer$} \\
+    vector & \href{https://nd4j.org/doc/org/nd4j/linalg/api/ndarray/INDArray.html}{\lstinline$INDArray$} & \href{https://javadoc.io/page/com.thoughtworks.deeplearning/plugins-indarrayweights_2.11/latest/com/thoughtworks/deeplearning/plugins/INDArrayWeights%24INDArrayWeight.html}{\lstinline$INDArrayWeight$} & \href{https://javadoc.io/page/com.thoughtworks.deeplearning/plugins-indarraylayers_2.11/latest/com/thoughtworks/deeplearning/plugins/INDArrayLayers%24INDArrayLayer.html}{\lstinline$INDArrayLayer$} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+
+In addition to differentiable operations, \lstinline{Layer}s and \lstinline{Weight}s can be evaluated with a \lstinline{predict} method, thus, the robot can answer IQ test questions like calling an ordinary function, shown in Listing~\ref{predict}. 
+You may notice the \lstinline{blockingAwait} suffix appended to \lstinline{predict}, because \lstinline{predict} returns a \lstinline{Future[Double]}
+\footnote{ 
+  For readers familiar to Haskell, you can understand \lstinline{Future} from the corresponding types in Haskell:
+  \begin{itemize}
+    \item \lstinline{Future} is an opaque type alias of a \lstinline{TryT}-transformed \lstinline{UnitContinuation}, which is used for asynchronous operations with the ability of exception handling.
+    \item ``opaque type alias'' is similar to the \lstinline{newtype} feature in Haskell.
+    \item \lstinline{TryT} provides the ability of exception handling, which is similar to \lstinline{ExceptT} monad transformer in Haskell.
+    \item \lstinline{UnitContinuation} is similar to \lstinline{Cont ()} in Haskell, which is used for asynchronous operations, like an asynchronous version of \lstinline{IO} in Haskell.
+  \end{itemize}
+  All the above types are general purpose libraries, not parts of DeepLearning.scala. We use those continuation based monadic data types to archive the ability of parallel and asynchronous execution.
+}
+, which contains the asynchronous task to compute the result. The actual computation is not performed in  \lstinline{predict} until \lstinline{blockingAwait} is invoked \footnote{
+  When \lstinline{predict} is used in a real world scenario (e.g. running a neural network in a web service), \lstinline{blockingAwait} should be replaced to \lstinline{flatMap}, in case of blocking the current thread, which is an expensive resource. We use this \lstinline{blockingAwait} here because it's more straightforward for understanding.
+}.
+
+\begin{lstlisting}[float={h t b p},caption={Inference on an untrained model},label={predict}]
 val question = Seq(42.0, 43.0, 44.0)
 println(guessNextNumber(question).predict.blockingAwait)
 \end{lstlisting}
@@ -93,9 +142,9 @@ def linearRegression(question: Seq[Double], expectedAnswer: Double): DoubleLayer
 }
 \end{lstlisting}
 
-\lstinline{linearRegression}, composed of \lstinline{squaredLoss} and \lstinline{squaredLoss}, returns a \lstinline{DoubleLayer} of the loss for a specific question and its expected answer. \lstinline{linearRegression} is a linear regression model with a square loss, and it can be trained.
+\lstinline{linearRegression}, composed of \lstinline{guessNextNumber} and \lstinline{squaredLoss}, returns a \lstinline{DoubleLayer} of the loss for a specific question and its expected answer. \lstinline{linearRegression} is a linear regression model with a square loss, and it can be trained as shown Listing~\ref{train}. The \lstinline{blockingAwait} is invoked because \lstinline{train} returns a \lstinline{Future[Double]} as well.
 
-\begin{lstlisting}[float={h t b p},caption={Training for 500 iterations}]
+\begin{lstlisting}[float={h t b p},caption={Training for 500 iterations},label={train}]
 val question1 = Seq(3.0, 4.0, 5.0)
 val expectedAnswer1 = 6.0
 
@@ -179,6 +228,8 @@ def naiveGatedNet(input: INDArrayLayer): INDArrayLayer = {
   }
 }
 \end{lstlisting}
+
+% TODO: Explain blockingAwait
 
 There are three sub-networks in the \lstinline{naiveGatedNet} function. The \lstinline{gate} returns a pair of \lstinline{DoubleLayer}s. By blocking await the \lstinline{predict}ion result, we got two \lstinline{Double}s, which can be used to determine which sub-network is preferred between \lstinline{leftSubnet} and \lstinline{rightSubnet}. The chosen sub-network will multiplies with the value returned by the \lstinline{gate} in order to enabling backpropagation on the \lstinline{gate}.
 
@@ -278,20 +329,6 @@ Neural networks created in DeepLearning.scala are \glspl{differentiable function
 \end{itemize}
 
 Table~\ref{differentiable types} shows nine types that have built-in \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html}{\lstinline{DeepLearning}} type classes.
-
-\begin{table}[h t b p]
-  \caption{Built-in Differentiable Types}
-  \label{differentiable types}
-  \begin{tabular}{c l l l}
-    \toprule
-    & non-trainable value & \gls{trainable variable} & \gls{differentiable expression} \\
-    \midrule
-    single-precision scalar & \href{https://www.scala-lang.org/api/current/scala/Double.html}{\lstinline$Double$} & \href{https://javadoc.io/page/com.thoughtworks.deeplearning/plugins-doubleweights_2.11/latest/com/thoughtworks/deeplearning/plugins/DoubleWeights%24DoubleWeight.html}{\lstinline$DoubleWeight$} & \href{https://javadoc.io/page/com.thoughtworks.deeplearning/plugins-doublelayers_2.11/latest/com/thoughtworks/deeplearning/plugins/DoubleLayers%24DoubleLayer.html}{\lstinline$DoubleLayer$} \\
-    double-precision scalar & \href{https://www.scala-lang.org/api/current/scala/Float.html}{\lstinline$Float$} & \href{https://javadoc.io/page/com.thoughtworks.deeplearning/plugins-floatweights_2.11/latest/com/thoughtworks/deeplearning/plugins/FloatWeights%24FloatWeight.html}{\lstinline$FloatWeight$} & \href{https://javadoc.io/page/com.thoughtworks.deeplearning/plugins-floatlayers_2.11/latest/com/thoughtworks/deeplearning/plugins/FloatLayers%24FloatLayer.html}{\lstinline$FloatLayer$} \\
-    vector & \href{https://nd4j.org/doc/org/nd4j/linalg/api/ndarray/INDArray.html}{\lstinline$INDArray$} & \href{https://javadoc.io/page/com.thoughtworks.deeplearning/plugins-indarrayweights_2.11/latest/com/thoughtworks/deeplearning/plugins/INDArrayWeights%24INDArrayWeight.html}{\lstinline$INDArrayWeight$} & \href{https://javadoc.io/page/com.thoughtworks.deeplearning/plugins-indarraylayers_2.11/latest/com/thoughtworks/deeplearning/plugins/INDArrayLayers%24INDArrayLayer.html}{\lstinline$INDArrayLayer$} \\
-    \bottomrule
-  \end{tabular}
-\end{table}
 
 Ideally, a differentiable function should be an ad hoc polymorphic function that accepts heterogeneous types of input.
 

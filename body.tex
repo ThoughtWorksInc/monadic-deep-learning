@@ -166,7 +166,7 @@ val question = Seq(42.0, 43.0, 44.0)
 println(guessNextNumber(question).predict.blockingAwait)
 \end{lstlisting}
 
-This time, it will prints a number closed to 45, because the IQ test robot have finally learnt the pattern of arithmetic progression.
+This time, it will print a number closed to 45, because the IQ test robot have finally learned the pattern of arithmetic progression.
 
 The IQ test robot example shows some basic concepts in DeepLearning.scala.
 
@@ -179,20 +179,26 @@ The IQ test robot example shows some basic concepts in DeepLearning.scala.
 
 \section{Dynamic Neural Networks}
 
-DeepLearning.scala supports dynamic neural network. It means that the control flow of a neural network can differ according to its internal intermediate state when processing a special input. Especially, the ability to conditional enabling a sub-neural network is a crucial feature to build outrageously large neural networks \cite{shazeer2017outrageously}.
+DeepLearning.scala supports dynamic neural networks. It means that the control flow of a neural network can differ according to values of internal nodes of the computational graph, when processing a special input. This is the key feature of recent deep learning frameworks like PyTorch \cite{paszke2017pytorch} or Chainer \cite{tokui2015chainer}. Especially, dynamic deep neural networks can be more efficient by skipping part of the model \cite{liu2017dynamic}.
 
-Suppose we have two sub-neural networks, \lstinline{leftSubnet} and \lstinline{rightSubnet}. We want to build a gated network, which conditionally runs either \lstinline{leftSubnet} or \lstinline{rightSubnet} for a special \lstinline{input}.
+In this section, we will present how to create a simple dynamic neural network in DeepLearning.scala, which can be considered as a simplified version of outrageously large neural networks \cite{shazeer2017outrageously}.
 
-\begin{lstlisting}[float={h t b p},caption={Predefined sub-networks}]
+Suppose we have two sub-neural networks, \lstinline{leftSubnet} and \lstinline{rightSubnet} (Listing~\ref{sub-networks}) \footnote{
+  For performance purpose, instead of \lstinline{Seq[DoubleLayer]}, we use \lstinline{INDArrayLayer} as the type of \gls{differentiable expression} backed by ND4J. \lstinline{INDArrayLayer} supports differentiable version of most operations that ND4J's n-dimensional array \lstinline{INDArray} supports.
+}. We want to build a ``gated'' network, which conditionally runs either \lstinline{leftSubnet} or \lstinline{rightSubnet} for a special \lstinline{input}.
+
+\begin{lstlisting}[float={h t b p},caption={Predefined sub-networks},label={sub-networks}]
 def leftSubnet(input: INDArrayLayer): INDArrayLayer
 def rightSubnet(input: INDArrayLayer): INDArrayLayer
 \end{lstlisting}
 
-Which sub-network is selected for the \lstinline{input} should be determined by the \lstinline{gate} network, which returns a pair of differentiable double expressions that indicate the preferences between \lstinline{leftSubnet} and \lstinline{rightSubnet}.
+Which sub-network is selected for the \lstinline{input} should be determined by the \lstinline{gate} network, which returns a pair of differentiable double expressions that indicate the preferences between \lstinline{leftSubnet} and \lstinline{rightSubnet}, shown in (Listing~\ref{gate}).
 
-\begin{lstlisting}[float={h t b p},caption={Predefined gate network}]
+\begin{lstlisting}[float={h t b p},caption={Predefined gate network},label={gate}]
 def gate(input: INDArrayLayer): (DoubleLayer, DoubleLayer)
 \end{lstlisting}
+
+The differentiable operations on \lstinline{DoubleLayer}s  and \lstinline{INDArrayLayer}s form a differentiable embedded DSL inside the meta-language Scala. Thus, the concept of ``gated'' neural network can be considered as a conditional control flow in the differentiable DSL, and the values of nodes of a gated neural network are simply some let bindings in the DSL.
 
 The control flow of gated network that we want to build is described in Function~\ref{GatedNetwork}.
 
@@ -229,15 +235,13 @@ def naiveGatedNet(input: INDArrayLayer): INDArrayLayer = {
 }
 \end{lstlisting}
 
-% TODO: Explain blockingAwait
-
-There are three sub-networks in the \lstinline{naiveGatedNet} function. The \lstinline{gate} returns a pair of \lstinline{DoubleLayer}s. By blocking await the \lstinline{predict}ion result, we got two \lstinline{Double}s, which can be used to determine which sub-network is preferred between \lstinline{leftSubnet} and \lstinline{rightSubnet}. The chosen sub-network will multiplies with the value returned by the \lstinline{gate} in order to enabling backpropagation on the \lstinline{gate}.
+There are three sub-networks in the \lstinline{naiveGatedNet} function. The \lstinline{gate} returns a pair of \lstinline{DoubleLayer}s. By blocking await the \lstinline{predict}ion result, we get two \lstinline{Double}s, which can be used to determine which sub-network is preferred between \lstinline{leftSubnet} and \lstinline{rightSubnet}. The chosen sub-network will multiplies with the value returned by the \lstinline{gate} in order to enabling backpropagation on the \lstinline{gate}.
 
 However, there is a performance issue in the \lstinline{naiveGatedNet}.
 
-In DeepLearning.scala, all differentiable expressions, including the scalar \lstinline{DoubleLayer} and vectorize \lstinline{INDArrayLayer}, contain some lazily evaluated differentiable \gls{computational graph} nodes, which will not be executed until their predict or train methods are invoked.
+In DeepLearning.scala, all differentiable expressions, including the scalar \lstinline{DoubleLayer} and vectorized \lstinline{INDArrayLayer}, contain some lazily evaluated differentiable \gls{computational graph} nodes, which will not be executed until their asynchronous task returned from \lstinline{predict} or \lstinline{train} is performed in a \lstinline{blockingAwait} or \lstinline{onComplete} calls.
 
-So, the two calls to the \lstinline{predict} method in the \lstinline{if} will execute the \gls{computational graph} in \lstinline{gate} twice. Also the \gls{computational graph} in \lstinline{naiveGatedNet} will be executed when users call \lstinline{predict} or \lstinline{train} call \lstinline{naiveGatedNet} in the future. But what's even worse is, \lstinline{input} contains a \gls{computational graph}, too. Along with \lstinline{gate}, it will be evaluated three times, which may contain complex future extracting process.
+So, the two \lstinline{predict.blockingAwait} calls in the \lstinline{if} will execute the \gls{computational graph} in \lstinline{gate} twice. Also the \gls{computational graph} in \lstinline{naiveGatedNet} will be executed when users call \lstinline{predict} or \lstinline{train} call \lstinline{naiveGatedNet} in the future. But what's even worse is, \lstinline{input} contains a \gls{computational graph}, too. Along with \lstinline{gate}, it will be evaluated three times, which may contain complex future extracting process.
 
 \subsection{Monadic Control Flow (good)}
 \label{monadic}

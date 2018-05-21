@@ -413,7 +413,7 @@ In this section, we will introduce the internal data structure used in DeepLearn
 \subsection{Ordinary Dual Number}
 \label{dual number}
 
-Our approach for reverse mode AD use a data structure similar to traditional forward mode AD, with only a few changes.
+Our approach for reverse mode AD uses a data structure similar to traditional forward mode AD, with only a few changes.
 
 Forward mode AD can be viewed as computation on dual number. For example, dual number for scalar types can be implemented as Listing~\ref{DualNumber}:
 
@@ -441,14 +441,12 @@ object DualNumber {
 
 However, this approach is hard to type-check if we want to support multiple  \glspl{trainable variable}. \lstinline{PartialDelta} in Listing~\ref{DualNumber} represents the partial derivative of \glspl{trainable variable}. In AD tools that support only one \gls{trainable variable}, the \gls{trainable variable} is usually forced to be the input. Hence \lstinline{PartialDelta} is the input type for those AD tools. This assumption is broken for our case, since our delta type of a specific \lstinline{DualNumber} must contain derivatives for all \glspl{trainable variable} that were used to produce the \lstinline{DualNumber}, not only the partial derivative of input. As a result, the type of delta varies when the number of \glspl{trainable variable} grows.
 
-To type-check the delta, considering the only usage of the delta in a neural network is updating \glspl{trainable variable} in a gradient descent based optimization algorithm. We can replace \lstinline{PartialDelta} to a \lstinline{UpdateWeights} closure.
+To type-check the delta, considering the only usage of the delta in a neural network is in updating \glspl{trainable variable} in a gradient descent based optimization algorithm. We can replace \lstinline{PartialDelta} to a \lstinline{UpdateWeights} closure Listing~\ref{class ClosureBasedDualNumber}. In order to implement arithmetic operations for the new dual number, the operations on \lstinline{PartialDelta} should be replaced to custom functions for \lstinline{UpdateWeights} (Listing~\ref{object ClosureBasedDualNumber}).
 
 \begin{lstlisting}[float={h t b p},caption={Replacing \lstinline{PartialDelta} to a closure}, label={class ClosureBasedDualNumber}]
 type Data = Double  
 case class ClosureBasedDualNumber(data: Data, backward: UpdateWeights)
 \end{lstlisting}
-
-\lstinline{UpdateWeights} in Listing~\ref{class ClosureBasedDualNumber} is a function type that contains side-effects to update \glspl{trainable variable}. In order to implement arithmetic operations for the new dual number, the operations on \lstinline{PartialDelta} should be replaced to custom functions for \lstinline{UpdateWeights} (Listing~\ref{object ClosureBasedDualNumber}):
 
 \begin{lstlisting}[float={h t b p},caption={Replacing operations on \lstinline{PartialDelta} to custom functions for \lstinline{UpdateWeights}}, label={object ClosureBasedDualNumber}]  
 
@@ -464,10 +462,11 @@ object ClosureBasedDualNumber {
 }
 \end{lstlisting}
 
+So here comes the question: how to implement the \lstinline{UpdateWeights} to make its behavior be equivalent to the original dual number implementation.
 
-Mathematically, the \lstinline{UpdateWeights} type in a dual number can be any vector space, i.e. the \lstinline{UpdateWeights} closure itself must support addition and scalar multiplication operations.
+Mathematically, the \lstinline{UpdateWeights} type in a dual number should form any vector space, i.e. the \lstinline{UpdateWeights} closure itself must support addition and scalar multiplication operations.
 
-The addition operation for closures is defined as (\ref{differentiable addition}):
+Our approach is making \lstinline{UpdateWeights} be a function type that contains side-effects to update \glspl{trainable variable}.  Thus the addition operation for closures can be defined as (\ref{differentiable addition}).
 
 \begin{equation}
 \label{differentiable addition}
@@ -481,7 +480,7 @@ And the scalar multiplication operation for closures is defined as (\ref{differe
 (x_0f)(x_1) = f(x_0x_1)
 \end{equation}
 
-These arithmetic operations can be implemented in monadic data types as shown in Listing~\ref{UpdateWeights}.
+The above definition of arithmetic operations can be implemented in monadic data types as shown in Listing~\ref{UpdateWeights}.
 
 \begin{lstlisting}[float={h t b p},caption={Arithmetic operations for the closure that contains side-effects}, label={UpdateWeights}, escapeinside={(*}{*)}]
 type UpdateWeights = Do[Double] => SideEffects
@@ -498,12 +497,12 @@ object UpdateWeights {
 }
 \end{lstlisting}
 
-\lstinline{UpdateWeights}, as a replacement to original \lstinline{PartialDelta}, is a closure able to update derivatives for all weight with a coefficient (the \lstinline{Double} parameter).
+\lstinline{UpdateWeights}, as a replacement to original \lstinline{PartialDelta}, is a closure able to update derivatives for all weights with a coefficient (the \lstinline{Double} parameter).
 \lstinline{|+|} is the \lstinline{append} operation of \lstinline{scala.Semigroup}, which could be any cumulative data type.
 
 Also note that the parameter is a monadic data type \href{https://javadoc.io/page/com.thoughtworks.raii/asynchronous_2.11/latest/com/thoughtworks/raii/asynchronous%24%24Do.html}{\lstinline{Do}} that encapsulates the computation of derivative. Unlike strictly evaluated values, \lstinline{Do} is an operation evaluated in need.
 
-In DeepLearning.scala, our \lstinline{SideEffects} is based on the asynchronous operation \lstinline{UnitContinuation}.
+In DeepLearning.scala, our \lstinline{SideEffects} is based on the asynchronous operation type \texttt{UnitContinuation}. Our built-in differentiable operations execute the independent parts of backward pass in parallel with the help of \lstinline{Applicative} type class instances of \texttt{UnitContinuation}.
 
 \begin{lstlisting}[float={h t b p},caption={Monadic side-effects}, label={SideEffects}]
 type SideEffects = UnitContinuation[Unit]
@@ -528,7 +527,7 @@ def createTrainableVariable(initialValue: Double, learningRate: Double): Closure
 }
 \end{lstlisting}
 
-In Listing~\ref{createTrainableVariable}, the \gls{trainable variable} is trained by a fixed learning rate to simplify the hyperparameters of optimization algorithms. The actual DeepLearning.scala implementation uses a more sophisticate approach to configure the hyperparameters  \begin{anonsuppress} described in \cite{yang2017expression}
+In Listing~\ref{createTrainableVariable}, the \gls{trainable variable} is trained by a fixed learning rate to simplify the hyperparameters of optimization algorithms. The actual DeepLearning.scala implementation uses a more sophisticated approach to configure the hyperparameters  \begin{anonsuppress} described in \cite{yang2017expression}
 \end{anonsuppress}
 .
 
@@ -581,7 +580,7 @@ The \gls{computational graph} of \lstinline{computationalTree} is shown in Figur
 
 The closure-based dual number \lstinline{y1} has a closure \lstinline{backward}, which returns \lstinline{SideEffects} that recursively change all \glspl{trainable variable} referenced by the closure.
 
-Note that \lstinline{backward} itself does not perform any side effects. It just collecting all side effects into a \lstinline{UnitContinuation[Unit]}. Figure~\ref{tree backpropagation} shows how the side effects of updating \glspl{trainable variable} are collected.
+Note that \lstinline{backward} itself does not perform any side effects. It just collects all side effects into a \lstinline{UnitContinuation[Unit]}. Figure~\ref{tree backpropagation} shows how the side effects of updating \glspl{trainable variable} are collected.
 
 \begin{figure}[h t b p]
   \newcommand{\x}{$x$}
@@ -714,7 +713,7 @@ The process in \lstinline{y2.backward} is shown in Figure~\ref{diamond backpropa
 
 Generally, given $n$ levels of nested diamond dependencies, the computational complexity is $O(2^n)$, which is unacceptable for neural networks that may share common \glspl{differentiable expression}.
 
-We introduced reference counting algorithm for dual numbers, to avoid the exponential time complexity.
+We introduced a reference counting algorithm for dual numbers, to avoid the exponential time complexity.
 
 The reference counting is managed in a wrapper of \lstinline{Tape}, which has additional \lstinline{acquire} and \lstinline{release} functions.
 
@@ -725,7 +724,7 @@ Each wrapper has two internal states:
 \end{enumerate*}
 Respectively, \lstinline{acquire} and \lstinline{release} calls will increase and decrease the reference counter, and \lstinline{backward} calls will cumulate the \lstinline{delta} to the accumulator.
 
-When reference counting algorithm is enabled, \lstinline{backward} is recursive any more. Instead, a wrapper only call \lstinline{backward} of its dependencies when reference counter is decreased to zero. The entire process of backpropagation is shown in Figure~\ref{reference-counted backpropagation}.
+When reference counting algorithm is enabled, \lstinline{backward} is not recursive any more. Instead, a wrapper only call \lstinline{backward} of its dependencies when the reference counter is decreased to zero. The entire process of backpropagation is shown in Figure~\ref{reference-counted backpropagation}.
 
 \begin{figure}[h t b p]
   \newcommand{\x}{$x$}
@@ -776,7 +775,7 @@ When reference counting algorithm is enabled, \lstinline{backward} is recursive 
 
 This wrapper is implemented as the monadic data type \href{https://javadoc.io/page/com.thoughtworks.raii/asynchronous_2.11/latest/com/thoughtworks/raii/asynchronous%24%24Do.html}{\lstinline{Do}}, in which the side effects of updating counters and accumulators are monadic control flows. With the help of \lstinline{Do}, now our \glspl{computational graph} are modeled in \lstinline{Do[Tape[Data, Delta]]}, which can be created by \lstinline{forward} methods described in Section~\ref{monadic}. As mentioned in Section~\ref{applicative}, \gls{computational graph} node of binary operations are evaluated in parallel.
 
-In traditional backpropagation implementation, tape is a list, hence both the execution order of backward pass and forward pass must be sequential reverse to each other. Even previous attempt of closure-based tape\cite{pearlmutter2008reverse} still requires conversion to sequential expressions of A-normal form\cite{sabry1993reasoning}. 
+In traditional backpropagation implementation, tape is a list, hence both the execution order of backward pass and forward pass must be sequentially reverse to each other. Even previous attempt of closure-based tape\cite{pearlmutter2008reverse} still requires conversion to sequential expressions of A-normal form\cite{sabry1993reasoning}. 
 
 By introducing reference counting, the execution order of our backward pass and forward pass do not have to be exactly reverse, hence the conversion to A-normal form becomes unnecessary. As a result, DeepLearning.scala supports out-of-order execution in both forward pass and backward pass, in which the independent sub-graph can be even executed in parallel.
 
@@ -789,15 +788,15 @@ In brief, in each iteration, a \gls{differentiable function} that contains multi
   \item Executing the user-defined \gls{differentiable function} with a batch of input, to obey a \gls{differentiable expression} (i.e. a subtype of \lstinline{Layer}).
   \label{obey}
   
-  \item Calling \lstinline{forward} on \gls{differentiable expression} the to build a \gls{computational graph} (i.e. a \lstinline{Do[Tape[Data, Delta]]}), though the reference counter to the \gls{computational graph} is zero at the point.
+  \item Calling \lstinline{forward} on \gls{differentiable expression} to build a \gls{computational graph} (i.e. a \lstinline{Do[Tape[Data, Delta]]}). The reference counter to the \gls{computational graph} is zero at the point.
   \label{build}
   
-  \item Performing the \lstinline{forward} pass of \gls{differentiable expression} to build a tape (i.e. a \lstinline{Tape[Data, Delta]}), which contains a pair of the result of forward pass and a \lstinline{backward} closure. The reference counter of each node in \gls{computational graph} are increased during this step.
+  \item Performing the \lstinline{forward} pass of \gls{differentiable expression} to build a tape (i.e. a \lstinline{Tape[Data, Delta]}), which contains a pair of the result of forward pass and a \lstinline{backward} closure. The reference counter of each node in \gls{computational graph} is increased during this step.
   \label{acquire}
 
-  \item Performing \lstinline{backward} closure of the root node of the \gls{computational graph}. The accumulator of delta of the root node is stored.
+  \item Performing \lstinline{backward} closure of the root node of the \gls{computational graph}. The accumulator of delta on the root node is updated.
 
-  \item Releasing of the root node of the \gls{computational graph}. The reference counter of each node in \gls{computational graph} are decreased to zero and \lstinline{backward} closure of each node are performed during this step, thus all referenced \glspl{trainable variable} are updated.
+  \item Releasing of the root node of the \gls{computational graph}. The reference counter of each node in \gls{computational graph} is decreased to zero and \lstinline{backward} closure of each node is performed during this step, thus all referenced \glspl{trainable variable} are updated.
   \label{release}
 
 \end{enumerate}
@@ -808,20 +807,20 @@ Note that step~\ref{obey} and step~\ref{build} are pure function calls, with no 
 
 \subsection{New Back-end}
 Currently, DeepLearning.scala 2.0's built-in differentiable vector expression type \lstinline{INDArrayLayer} is based on nd4j's \lstinline{INDArray}  \cite{skymind2017nd4j}.
-As described in Section~\ref{training iteration}, in each training iteration, for each \gls{computational graph} node, \lstinline{forward} and \lstinline{backward} operations are performed, which internally call some methods on \lstinline{INDArray}, resulting GPU kernel executions if nd4j's CUDA runtime is used. These nd4j operations have a bad computational performance because:
+As described in Section~\ref{training iteration}, in each training iteration, for each \gls{computational graph} node, \lstinline{forward} and \lstinline{backward} operations are performed, which internally call some methods on \lstinline{INDArray}, resulting in GPU kernel executions for nd4j's CUDA runtime. These nd4j operations have bad computational performance because:
 \begin{enumerate*}
-  \item Some operations \footnote{\lstinline{INDArray.broadcast} for example} are extremely slow;
-  \item Enqueuing a kernel is relatively expensive.
+  \item some operations \footnote{\lstinline{INDArray.broadcast} for example} are extremely slow;
+  \item enqueuing a kernel is relatively expensive.
 \end{enumerate*}
 
  We are developing a new back-end as an alternative to nd4j. The new back-end will be able to merge multiple primitive operations into one larger kernel by dynamically generating OpenCL code. The new back-end
- will support more optimized operations on GPU and reduce the number of kernel executions. We expect our new version will achieve better computational efficient.
+ will support more optimized operations on the GPU and reduce the number of kernel executions. We expect our new version will achieve better computational efficiency.
 
 \subsection{Distributed Model}
 
-Current DeepLearning.scala is only able to run on a standalone JVM, not a distributed cluster, thus it does not support outrageously large neural networks \cite{shazeer2017outrageously} that does not fit into memory of a single node.
+Current DeepLearning.scala is only able to run on a standalone JVM, not a distributed cluster, thus it does not support ``outrageously large neural networks'' \cite{shazeer2017outrageously} that does not fit into memory of a single node.
 
-Since our \gls{computational graph} are monadic expressions that consist of closures, they can be serialized and executed remotely in theory. We are investigating how to build a distributed machine learning system based on remotely executed monadic expression. We will find out if this suggested approach can support more complex model than the parameter server approach can.
+Since our \gls{computational graph} is made of monadic expressions that consist of closures, they can be serialized and executed remotely in theory. We are investigating how to build a distributed machine learning system based on remotely executed monadic expression. We will find out if this suggested approach can support more complex model than the parameter server approach can.
 
 
 
@@ -835,15 +834,15 @@ DeepLearning.scala is an unique library among all deep learning frameworks. Our 
 There were two different mechanisms in state-of-the-art deep learning frameworks:
 Define-and-Run v.s. Define-by-Run.
 
-State-of-the-art Define-and-Run frameworks \cite{collobert2008torch,bergstra2010theano,jia2014caffe,chen2015mxnet,abadi2016tensorflow,intel2016bigdl,skymind2017deeplearning4j} allows users to create \glspl{computational graph}, which are immutable Abstract Syntax Trees (ASTs) of some object languages which can be evaluated by the framework runtime. Define-and-Run frameworks can schedule \gls{computational graph} to multiple CPU, GPU or other devices. However, the object languages have bad interoperability with the metalanguage. For example, a DeepLearning4j user cannot use Java control flows nor call Java native methods in neural networks.
+State-of-the-art Define-and-Run frameworks \cite{collobert2008torch,bergstra2010theano,jia2014caffe,chen2015mxnet,abadi2016tensorflow,intel2016bigdl,skymind2017deeplearning4j} allows users to create \glspl{computational graph}, which are immutable Abstract Syntax Trees (ASTs) of some object languages which can be evaluated by the framework runtime. Define-and-Run frameworks can schedule \glspl{computational graph} to multiple CPUs, GPUs or other devices. However, the object languages have bad interoperability with the metalanguage. For example, a DeepLearning4j user cannot use Java control flows nor call Java native methods in neural networks.
 
-State-of-the-art Define-by-Run frameworks \cite{tokui2015chainer,neubig2017dynet,google2017eager,paszke2017pytorch} can eagerly execute actual forward pass calculation in user written code, and, at the same time, generates the internal states for running backward pass. Unlike Define-and-Run frameworks, Define-by-Run frameworks have good interoperability with the hosting language. Control flows and native function calls can be easily used during the execution of neural networks. However, Define-and-Run frameworks tend to store states and perform side effects when defining neural network structures, which makes this mechanism unable to implement in a pure functional flavor.
+State-of-the-art Define-by-Run frameworks \cite{tokui2015chainer,neubig2017dynet,google2017eager,paszke2017pytorch} can eagerly execute actual forward pass calculation in user written code, and, at the same time, generate the internal states for running backward pass. Unlike Define-and-Run frameworks, Define-by-Run frameworks have good interoperability with the hosting language. Control flows and native function calls can be easily used during the execution of neural networks. However, Define-and-Run frameworks tend to store states and perform side effects when defining neural network structures, which makes this mechanism unsuitable for implementation in a purely functional flavor.
 
 We discovered the third mechanism of monadic deep learning. Neural networks in DeepLearning.scala are immutable like in Define-and-Run frameworks, and interoperable with Scala like in Define-by-Run frameworks.
 
 \subsection{AD in a Functional Library}
 
-Reverse mode AD in a functional library was previously considered impossible to be implemented without the ability to reflectively access and transform expressions associated with closures \cite{pearlmutter2008reverse}. For example, if you want to create a \lstinline{transform} function that returns the derivative for given function \lstinline{f}:
+Reverse mode AD in a functional library was previously impossible to implement without the ability to reflectively access and transform expressions associated with closures \cite{pearlmutter2008reverse}. For example, if you want to create a \lstinline{transform} function that returns the derivative for given function \lstinline{f}:
 
 \begin{lstlisting}[float={h t b p},caption={Impossible transform function for AD}, label={transform}]
 def transform(f: Double => Double): Double => Double
@@ -860,6 +859,8 @@ def typeSafeTransform(f: Double => DoubleLayer): Double => Future[Unit] = { inpu
 }
 \end{lstlisting}
 
+% TODO: Auto diff
+
 Unlike \cite{pearlmutter2008reverse}'s compiler primitive $\overleftarrow{J}$, our \lstinline{typeSafeTransform} can use the additional methods on \lstinline{DoubleLayer}. As a result, our \lstinline{typeSafeTransform} can be implemented without reflection, as an ordinary Scala function, instead of a compiler primitive or a macro.
 
 \section{Conclusion}
@@ -868,14 +869,14 @@ DeepLearning.scala is the first framework that achieves all the following goals:
 
 \begin{itemize}
   \item type safe
-  \item pure functional
+  \item purely functional
   \item reverse mode AD
   \item multiple \glspl{trainable variable}
   \item interoperable internal DSL
   \item dynamic neural network
 \end{itemize}
 
-With the help of DeepLearning.scala, a normal programmer is able to build complex neural networks from simple code. He still writes code as usual, and the only difference is that the code written in DeepLearning.scala are differentiable, which contains \glspl{trainable variable} that learn knowledges.
+With the help of DeepLearning.scala, a normal programmer is able to build complex neural networks from simple code. He still writes code as usual, and the only difference is that the code written in DeepLearning.scala are differentiable, which contains \glspl{trainable variable} that learn knowledge.
 
 \clearpage
 % Appendix

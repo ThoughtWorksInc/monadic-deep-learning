@@ -71,14 +71,26 @@ From the user's point of view, both \lstinline{DoubleLayer} and \lstinline{Doubl
 
 \begin{lstlisting}[float={h t b p},caption={The hypothetical type signature of multiplication operator for \lstinline{DoubleLayer} and \lstinline{DoubleWeight}},label={hypothetical differentiable types}]
 trait DoubleLayer {
+  // Scalar multiplication
   def *(rhs: Double): DoubleLayer
   def *(rhs: DoubleLayer): DoubleLayer
   def *(rhs: DoubleWeight): DoubleLayer
+
+  // Element-wise multiplication
+  def *(rhs: INDArray): INDArrayLayer
+  def *(rhs: INDArrayLayer): INDArrayLayer
+  def *(rhs: INDArrayWeight): INDArrayLayer
 }
 trait DoubleWeight {
+  // Scalar multiplication
   def *(rhs: Double): DoubleLayer
   def *(rhs: DoubleLayer): DoubleLayer
   def *(rhs: DoubleWeight): DoubleLayer
+
+  // Element-wise multiplication
+  def *(rhs: INDArray): INDArrayLayer
+  def *(rhs: INDArrayLayer): INDArrayLayer
+  def *(rhs: INDArrayWeight): INDArrayLayer
 }
 \end{lstlisting}
 
@@ -320,7 +332,10 @@ By combining both applicative functors and monads, DeepLearning.scala supports d
 \section{Ad Hoc Polymorphic Differentiable Functions}
 \label{Ad Hoc Polymorphism}
 
-Neural networks created in DeepLearning.scala are \glspl{differentiable function}, which contain expressions of differentiable types, which are any types that has their corresponding \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html}{\lstinline{DeepLearning}} type classes, including:
+In previous section, we had present the hypothetical differentiable types of multiplication for \lstinline{DoubleLayer} and \lstinline{DoubleWeight}. However, the method overloading approach shown in Listing~\ref{hypothetical differentiable types} is too verbose, and requires a lot of boilerplate code. In this section, we will present an approach to create custom \glspl{differentiable function} that supports without those methods overloading.
+
+A \gls{differentiable function} is a neural network. 
+Ideally, a differentiable function should be an ad hoc polymorphic function that accepts heterogeneous types of parameters, including:
 
 \begin{itemize}
   
@@ -329,14 +344,30 @@ Neural networks created in DeepLearning.scala are \glspl{differentiable function
   \item \Glspl{differentiable expression} of hidden states produced by any previous neural network layers, i.e. any \lstinline{INDArrayLayer}s regardless of the prefixes.
   
   \item \Glspl{trainable variable} in the case of activation maximization technique \cite{erhan2009visualizing}.i.e. any \lstinline{INDArrayWeight}s regardless of the prefixes.
+  
+  \item Other user defined differentiable type.
 
 \end{itemize}
 
 Table~\ref{differentiable types} shows nine types that have built-in \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html}{\lstinline{DeepLearning}} type classes.
 
-Ideally, a differentiable function should be an ad hoc polymorphic function that accepts heterogeneous types of input.
+This can be achieved with the help of \cite{gurnelltype}'s Scala encoding of dependent-type type class. We defined a \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html}{\lstinline{DeepLearning}} (Listing~\ref{DeepLearning} \footnote{
+For readers who are more familiar with Idris, there is a corresponding notation in Idris:
+\par\usebox{\IdrisDeepLearning}
+}) type class that witnesses any supported expressions including \glspl{differentiable expression}, \glspl{trainable variable}, or vanilla non-differentiable types. The users can create type aliases to restrict the types of state during forward pass and backward pass as shown in Listing~\ref{INDArrayDeepLearning}.
 
-Our solution is the dependent-type type class \cite{gurnelltype} \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html}{\lstinline{DeepLearning}} that witnesses any supported expressions including \glspl{differentiable expression}, \glspl{trainable variable}, or vanilla non-differentiable types. The users can create type aliases to restrict the types of state during forward pass and backward pass as shown in Listing~\ref{INDArrayDeepLearning}.
+\begin{lstlisting}[float={h t b p},caption={The dependent-type type \lstinline{DeepLearning}}, label={DeepLearning}]
+trait DeepLearning[Differentiable] {
+  /** The type of result calculated during forward pass */
+  type Data
+
+  /** The type of derivative during backward pass */
+  type Delta
+
+  def forward(differentiable: Differentiable): Do[Tape[Data, Delta]]
+  // Other auxiliary methods is omitted
+}
+\end{lstlisting}
 
 \begin{lstlisting}[float={h t b p},caption={A type class alias that witnesses dense vector expressions}, label={INDArrayDeepLearning}]
 type INDArrayExpression[Expression] = DeepLearning[Expression] {
@@ -358,7 +389,7 @@ def polymorphicDifferentiableFunction[A: INDArrayExpression, B: INDArrayExpressi
 
 Listing~\ref{polymorphicDifferentiableFunction} is similar to Listing~\ref{parallelByDefault}, except each argument of \lstinline{polymorphicDifferentiableFunction} accepts \lstinline{INDArray}, \lstinline{INDArrayWeight} or \lstinline{INDArrayLayer} respectively, not only  \lstinline{INDArrayLayer}.
 
-Note that built-in operations including arithmetic operations, \lstinline{max}, and \lstinline{dot} are polymorphic differentiable functions, too, which can be used in user-defined polymorphic \glspl{differentiable function}.
+Built-in operations including arithmetic operations, \lstinline{max}, and \lstinline{dot} are polymorphic differentiable functions defined in this approach, too, which can be used in user-defined polymorphic \glspl{differentiable function}.
 
 \section{Implementation}
 \label{implementation}

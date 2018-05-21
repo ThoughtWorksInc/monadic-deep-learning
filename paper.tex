@@ -90,9 +90,12 @@
 % DOI
 % \acmDOI{0000001.0000001}
 
+\newsavebox{\IdrisDeepLearning}
 
 % Document starts
 \begin{document}
+
+
 % Title portion
 \title{DeepLearning.scala 2.0: Statically Typed Neural Networks}
 %  \titlenote{This is a titlenote}
@@ -238,6 +241,18 @@ Together of these features, users of DeepLearning.scala are able to create compl
 
 % % The default list of authors is too long for headers.
 \renewcommand{\shortauthors}{B. Yang et al.}
+
+
+
+
+\begin{lrbox}{\IdrisDeepLearning}
+\begin{lstlisting}[basicstyle=\footnotesize,language=Haskell]
+interface DeepLearning Differentiable where
+  Data : Type
+  Delta : Type
+  forward : Differentiable -> Do (Tape Data Delta)
+\end{lstlisting}
+\end{lrbox}
 
 \input{body}
 

@@ -1,5 +1,5 @@
 %% For double-blind review submission, w/o CCS and ACM Reference (max submission space)
-\documentclass[acmsmall,10pt,review,screen,anonymous]{acmart}
+\documentclass[acmsmall,10pt,review,screen]{acmart}
 \settopmatter{printfolios=true,printccs=false,printacmref=false}
 
 
@@ -100,11 +100,11 @@
 \title{DeepLearning.scala 2.0: Statically Typed Neural Networks}
 %  \titlenote{This is a titlenote}
 \subtitle{Performing monadic automatic differentiation in parallel}
-%  \subtitlenote{Subtitle note}
+%  \subtitlenote{Subtitle note} 
 
 \author{Yang, Bo}
 \orcid{0000-0003-2757-9115}
-\affiliation{%
+\affiliation{
   \institution{ThoughtWorks, Inc}
 %   \streetaddress{104 Jamestown Rd}
 %   \city{Williamsburg}
@@ -124,13 +124,23 @@
 }
 \email{zhazhang@thoughtworks.com}
 \author{Marisa Kirisame} 
-\affiliation{%
+\affiliation{
  \institution{University of Washington}
 %  \streetaddress{Rono-Hills}
  \city{Seattle} 
  \state{Washington}
  \country{USA}}
 \email{lolisa@marisa.moe}
+\author{Shi, Kai} 
+\authornote{The corresponding author}
+\affiliation{
+  \institution{ThoughtWorks, Inc}
+%  \streetaddress{Rono-Hills}
+%  \city{Seattle} 
+%  \state{Washington}
+%  \country{USA}
+}
+\email{kshi@thoughtworks.com}
 
 \begin{abstract}
 The Java and Scala community built a very successful big data ecosystem, however, most of neural networks running on it are modeled in dynamically typed programming languages. These dynamically typed deep learning frameworks treat neural networks as differentiable expressions that contain many \glspl{trainable variable}, and perform automatic differentiation on those expressions when training them.

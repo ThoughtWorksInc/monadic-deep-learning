@@ -850,18 +850,18 @@ def transform(f: Double => Double): Double => Double
 
 Obviously this \lstinline{transform} function is impossible without the knowledge of the implementation of \lstinline{f}.
 
-Fortunately, in a statically typed language, the differentiable types and non-differentiable types should differ for type safety. The type signature of our AD function can use more powerful type \lstinline{DoubleLayer} instead of \lstinline{Double}. It can be written as Listing~\ref{typeSafeTransform}:
+Fortunately, in a statically typed language, the differentiable types and non-differentiable types should differ for type safety. The type signature of our AD function can use the differentiable type \lstinline{DoubleLayer} instead of \lstinline{Double}. It can be written as Listing~\ref{typeSafeTransform}:
 
 \begin{lstlisting}[float={h t b p},caption={Type safe transform function for AD}, label={typeSafeTransform}]
-def typeSafeTransform(f: Double => DoubleLayer): Double => Future[Unit] = { input: Double =>
+def typeSafeTransform(f: Double => DoubleLayer): Double => SideEffects = { input: Double =>
   val tape = f(input).forward
-  tape.backward(Do.now(1.0)).blockingAwait
+  tape.backward(Do.now(1.0))
 }
 \end{lstlisting}
 
-% TODO: Auto diff
-
 Unlike \cite{pearlmutter2008reverse}'s compiler primitive $\overleftarrow{J}$, our \lstinline{typeSafeTransform} can use the additional methods on \lstinline{DoubleLayer}. As a result, our \lstinline{typeSafeTransform} can be implemented without reflection, as an ordinary Scala function, instead of a compiler primitive or a macro.
+
+We also change the derivative type to an opaque monadic type \lstinline{SideEffects}. Unlike \lstinline{Double} derivative, \lstinline{SideEffects} can contain derivatives for more than one \glspl{trainable variable}, although this change exclude the ability of higher order numerical differentiation.
 
 \section{Conclusion}
 

@@ -16,7 +16,6 @@ Backpropagation can be seen as a special-purpose Automatic Differentiation (AD) 
 \end{description}
 
 Unfortunately, deep learning frameworks in statically typed languages have not achieved the above goals until 2017.
-
 Several AD libraries \cite{bischof1992adifor,griewank1996algorithm,TapenadeRef13,baydin2015diffsharp} written in Fortran, C++ or F\# support AD via operator overloading or external preprocessor but do not scale to deep neural networks, either due to using forward mode or lacking the feature of multiple trainable variables.
 
 Other deep learning frameworks in statically typed languages (including Scala binding of C++ frameworks) \cite{intel2016bigdl,skymind2017deeplearning4j,baydin2016hype,chen2017typesafe,zhao2017deepdsl} do not support AD, instead, they only provide their high level \gls{computational graph} APIs to compose predefined layers into neural networks. As a result, those frameworks do not have the ability to create fine-grained custom algorithms.
@@ -24,6 +23,10 @@ Other deep learning frameworks in statically typed languages (including Scala bi
 How to type a deep neural network as an AD control flow in a static typed language is still an open problem.
 
 In this paper, we present DeepLearning.scala, which is the first static typed implementation that achieves all the above goals for deep neural networks. Our approach is based on functional programming constructs, thus can be ported to Haskell, Idris and other statically typed functional programming languages.
+
+\section{Related Works}
+There are 
+Pytorch, Chainer, Tensorflow
 
 \section{Basic Concepts}
 \label{concepts}

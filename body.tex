@@ -24,9 +24,25 @@ How to type a deep neural network as an AD control flow in a static typed langua
 
 In this paper, we present DeepLearning.scala, which is the first static typed implementation that achieves all the above goals for deep neural networks. Our approach is based on functional programming constructs, thus can be ported to Haskell, Idris and other statically typed functional programming languages.
 
-\section{Related Works}
-There are 
-Pytorch, Chainer, Tensorflow
+\section{BackGround and Related Works}
+Deep Neural Network has become the state of the art on many tasks, such as vision, game playing, voice recognition and natrual language translation.
+
+A neural network is a computation model that transform the input, which is typically a tensor, into output(also tensor), by repeated application of tensor operation (matrix multiplication, tensor resizing, elementwise operations, such as max, +, etc). A deep neural network just indicate that there are many such transformations taken.
+
+Additionally, a neural network has additional, hidden, inputs, called weights (also tensors), and deep learning is the task of finding the best weights for a neural network, such that a predefined objective (called loss) is minimized.
+
+Most deep learning are supervised learning: in such task, there is also a dataset given, in which the data are pair of input and supposed output. The loss of such task is the difference of network output with supposed output.
+
+Deep learning is mostly done using different variation of Gradient Descend: we calculate the first order derivative of the loss function with respect to the weight, and update the weight accordingly. Since calculating the loss for supervised learning might be computationally expensive when the size of dataset is large, we commonly calculate the loss(and it's derivative) using only a randomly selected part of the dataset everytime we update our weight. This is refered as stochastic gradient descent.
+
+A deep learning framework is a DSL specialize for two features: automatic differentiation (which mean autmoatically computing the gradient of a function), and fast execution for tensor operations.
+
+However, most of the deep learning framework are in python, which is dynamically typed.
+Hence, it is not clear how to design a dl framework in a statically typed language, such that the dsl itself can enjoy the static type checking of the metalanguage, using technique such as final tagless or GADT.
+
+Another challenge is to encoprate advance, non first order language construct, such as closure, algebraic data type, or exception into the dsl. Although there are research on implementing automatic differentiation on a scheme dialect, it is unclear how to do so efficently in a statically typed language.
+
+We present DeepLearning.scala, which is a shallow embedding across scala that aim to provide a typed EDSL in scala for deep learning.
 
 \section{Basic Concepts}
 \label{concepts}

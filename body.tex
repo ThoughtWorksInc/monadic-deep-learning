@@ -865,11 +865,14 @@ Those benchmarks are built with Jmh \cite{shipilevjmh}, measuring the number of 
     node [shape="circle"]
     rankdir=RL
 
-	+ -> fc_2 -> reLU -> fc_1 -> reLU -> fc_0
-
-    softmax -> 
-
+    subgraph cluster_branch_0 {
+    	label = "branch_0"
+    	fc_2 -> reLU -> fc_1 -> reLU -> fc_0
+	}
     
+    softmax -> \+
+    
+    \+ -> fc_2
   }
   \end{dot2tex}
   \caption{The models used for benchmarks}
@@ -877,7 +880,7 @@ Those benchmarks are built with Jmh \cite{shipilevjmh}, measuring the number of 
 \end{figure}
 
 TODO
-
+xxx
 
 \section{Future Work}
 

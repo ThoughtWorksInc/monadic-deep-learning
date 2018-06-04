@@ -858,52 +858,15 @@ We created some benchmarks to evaluate the computational performance of DeepLear
 
 Those benchmarks are built with Jmh \cite{shipilevjmh}, measuring the number of mini-batches per second, for training neural networks that contain variant number of branches of sub-networks, as classifiers for CIFAR-100 dataset \cite{krizhevsky2009learning}. The architecture of the network used for benchmarks summarized in Figure~\ref{benchmark architecture 4}.
 
-
-%     subgraph cluster_branch_0 {
-%     	graph [ label="branch_0" ]
-%     	fc_2 -> reLU_0 -> fc_1 -> reLU_0 -> fc_0 -> input
-% 	}
-%     softmax -> \+
-%     \+ -> fc_2
 \begin{figure}[h t b p]
   \begin{dot2tex}[dot,mathmode,graphstyle={scale=0.5,transform shape}]
-  digraph {
-    
-    node [
-    	shape=circle;
-    ];
-    graph [
-    	rankdir=RL;
-    ];
-
-	subgraph cluster_branch_0 {
-    	graph [
-        	label="branch_0"
-        ]
-    	ReLU_0_1 -> fc_0_1 -> ReLU_0_0 -> fc_0_0
-	}
-
-    subgraph cluster_branch_1 {
-    	graph [
-        	label="branch_1"
-        ]
-    	ReLU_1_1 -> fc_1_1 -> ReLU_1_0 -> fc_1_0
-	}
-
-	fc_0_0 -> input
-	fc_1_0 -> input
-
-    softmax -> fc_2 -> "+"
-	"+" -> ReLU_0_1
-	"+" -> ReLU_1_1
-    
-  }
+  \input{benchmark.dot}
   \end{dot2tex}
   \caption{The models used for benchmarks}
   \label{benchmark architecture 4}
 \end{figure}
 
-TODO
+TODO 
 xxx
 
 \section{Future Work}

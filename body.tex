@@ -606,27 +606,6 @@ The \gls{computational graph} of \lstinline{computationalTree} is shown in Figur
   digraph {
     node [shape="circle"]
     rankdir=RL
-    y_0->x
-    y_0->w
-    y_1->y_0
-    y_1->y_0
-    y_2->y_1
-    y_2->y_1
-  }
-  \end{dot2tex}
-
-  \caption{A diamond2 dependent \gls{computational graph}}
-  \label{diamond2}
-\end{figure}
-
-xxxxxxx
-
-\begin{figure}[h t b p]
-
-  \begin{dot2tex}[dot,mathmode]
-  digraph {
-    node [shape="circle"]
-    rankdir=RL
 
     y_0 -> x
     y_0 -> w_0
@@ -731,24 +710,6 @@ The \gls{computational graph} of \lstinline{diamondDependentComputationalGraph} 
 
   \caption{A diamond dependent \gls{computational graph}}
   \label{diamond}
-\end{figure}
-
-
-
-\begin{figure}[h t b p]
-  \begin{dot2tex}[dot,mathmode]
-  digraph {
-    node [shape="circle"]
-    rankdir=RL
-
-
-    softmax -> classifiers -> reLU -> fc_1 -> reLU -> fc_0
-
-    
-  }
-  \end{dot2tex}
-  \caption{The models used for benchmarks}
-  \label{benchmark architecture2}
 \end{figure}
 
 When \lstinline{y2.backward} is invoked, in order to collect side effects of \lstinline{y2}'s dependencies, \lstinline{y1.backward} will be invoked, twice, and each \lstinline{y1.backward} call will triggers two \lstinline{y0.backward} calls. As a result, for each iteration of backpropagation, \lstinline{y0.backward}, \lstinline{w.backward} and \lstinline{x.backward} are invoked four times, respectively.
@@ -904,8 +865,9 @@ Those benchmarks are built with Jmh \cite{shipilevjmh}, measuring the number of 
     node [shape="circle"]
     rankdir=RL
 
+	+ -> fc_2 -> reLU -> fc_1 -> reLU -> fc_0
 
-    softmax -> classifiers -> reLU -> fc_1 -> reLU -> fc_0
+    softmax -> 
 
     
   }

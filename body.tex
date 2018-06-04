@@ -604,7 +604,7 @@ The \gls{computational graph} of \lstinline{computationalTree} is shown in Figur
 
   \begin{dot2tex}[dot,mathmode]
   digraph {
-    node [shape="circle"]
+    node [shape=circle]
     rankdir=RL
 
     y_0 -> x
@@ -697,7 +697,7 @@ The \gls{computational graph} of \lstinline{diamondDependentComputationalGraph} 
 
   \begin{dot2tex}[dot,mathmode]
   digraph {
-    node [shape="circle"]
+    node [shape=circle]
     rankdir=RL
     y_0->x
     y_0->w
@@ -866,13 +866,37 @@ Those benchmarks are built with Jmh \cite{shipilevjmh}, measuring the number of 
 %     softmax -> \+
 %     \+ -> fc_2
 \begin{figure}[h t b p]
-  \begin{dot2tex}[dot,mathmode]
+  \begin{dot2tex}[dot,mathmode,graphstyle={scale=0.5,transform shape}]
   digraph {
-    node [shape="circle"]
-    rankdir=RL
+    
+    node [
+    	shape=circle;
+    ];
+    graph [
+    	rankdir=RL;
+    ];
 
-	input
-	+ -> fc_2
+	subgraph cluster_branch_0 {
+    	graph [
+        	label="branch_0"
+        ]
+    	ReLU_0_1 -> fc_0_1 -> ReLU_0_0 -> fc_0_0
+	}
+
+    subgraph cluster_branch_1 {
+    	graph [
+        	label="branch_1"
+        ]
+    	ReLU_1_1 -> fc_1_1 -> ReLU_1_0 -> fc_1_0
+	}
+
+	fc_0_0 -> input
+	fc_1_0 -> input
+
+    softmax -> fc_2 -> "+"
+	"+" -> ReLU_0_1
+	"+" -> ReLU_1_1
+    
   }
   \end{dot2tex}
   \caption{The models used for benchmarks}

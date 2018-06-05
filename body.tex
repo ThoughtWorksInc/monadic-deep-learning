@@ -996,25 +996,22 @@ Since CIFAR-100 dataset has both coarse-grained and fine-grained labels, we crea
 
 We constructed mini-batches by coarse-grained class when training. All samples in a mini-batch belongs to one coarse-grained class. With the help of the feature of dynamic neural network in DeepLearning.scala, for each training iteration, only one fine-grained classifier is used, other 19 fine-grained classifiers are skipped. When inference, the fine-grained classifier is chosen dynamically according to the prediction by coarse-grained classifier. For comparison, we also created another set of benchmarks that do not skip unmatched fine-grained classifiers.
 
-The benchmark result is shown in Table~\ref{The benchmark result when unmatched fine-grained classifier is skipped} and Table~\ref{The benchmark result when no fine-grained classifier is skipped} (larger score is better):
 
-TODO: batch size = 8
-
-number of features 16
+The benchmark result when training these models is shown in Table~\ref{The benchmark result when unmatched fine-grained classifier is skipped} and Table~\ref{The benchmark result when no fine-grained classifier is skipped} (larger score is better). The sizes of those dense layers previous to softmax layers in these models are the number of classes (20 for coarse-grained classifier, 5 for fine-grained classifiers). Other dense layers output 64 features. These models are trained in a SGD optimizer with batch size 16. Both the number of columns in each model and the number of threads used in training vary among benchmarks.
 
 \begin{table}[htbp]
   \begin{tabular}{l|l|l|rl}
-  \texttt{number of branches} & \texttt{thread pool size} & \multicolumn{2}{c}{\texttt{Score, ops/s}} \\
+  \texttt{number of columns} & \texttt{thread pool size} & \multicolumn{2}{c}{\texttt{Score, ops/s}} \\
   \hline
-  \texttt{4} & \texttt{1} & \texttt{ 5.516} & \scriptsize $\pm$ \texttt{0.101}  \\
-  \texttt{4} & \texttt{2} & \texttt{ 7.351} & \scriptsize $\pm$ \texttt{0.164}  \\
-  \texttt{4} & \texttt{4} & \texttt{ 9.895} & \scriptsize $\pm$ \texttt{0.483}  \\
-  \texttt{2} & \texttt{1} & \texttt{ 6.824} & \scriptsize $\pm$ \texttt{0.101}  \\
-  \texttt{2} & \texttt{2} & \texttt{ 9.739} & \scriptsize $\pm$ \texttt{0.195}  \\
-  \texttt{2} & \texttt{4} & \texttt{11.920} & \scriptsize $\pm$ \texttt{0.480}  \\
-  \texttt{1} & \texttt{1} & \texttt{ 7.553} & \scriptsize $\pm$ \texttt{0.104}  \\
-  \texttt{1} & \texttt{2} & \texttt{10.269} & \scriptsize $\pm$ \texttt{0.126}  \\
-  \texttt{1} & \texttt{4} & \texttt{13.562} & \scriptsize $\pm$ \texttt{0.117}  \\
+  \texttt{4} & \texttt{1} & \texttt{2.550} & \scriptsize $\pm$ \texttt{0.043}  \\
+  \texttt{4} & \texttt{2} & \texttt{3.233} & \scriptsize $\pm$ \texttt{0.276}  \\
+  \texttt{4} & \texttt{4} & \texttt{3.338} & \scriptsize $\pm$ \texttt{0.217}  \\
+  \texttt{2} & \texttt{1} & \texttt{3.345} & \scriptsize $\pm$ \texttt{0.095}  \\
+  \texttt{2} & \texttt{2} & \texttt{3.987} & \scriptsize $\pm$ \texttt{0.091}  \\
+  \texttt{2} & \texttt{4} & \texttt{4.828} & \scriptsize $\pm$ \texttt{0.200}  \\
+  \texttt{1} & \texttt{1} & \texttt{3.854} & \scriptsize $\pm$ \texttt{0.046}  \\
+  \texttt{1} & \texttt{2} & \texttt{5.239} & \scriptsize $\pm$ \texttt{0.288}  \\
+  \texttt{1} & \texttt{4} & \texttt{6.328} & \scriptsize $\pm$ \texttt{0.058}  \\
   \end{tabular}
   \caption{The benchmark result when no fine-grained classifier is skipped}
   \label{The benchmark result when no fine-grained classifier is skipped}
@@ -1022,17 +1019,17 @@ number of features 16
 
 \begin{table}[htbp]
   \begin{tabular}{l|l|l|l|l|rl}
-  \texttt{number of branches} & \texttt{thread pool size} & \multicolumn{2}{c}{\texttt{Score, ops/s}} \\
+  \texttt{number of columns} & \texttt{thread pool size} & \multicolumn{2}{c}{\texttt{Score, ops/s}} \\
   \hline
-  \texttt{4} & \texttt{1} & \texttt{12.877} & \scriptsize $\pm$ \texttt{0.342}  \\
-  \texttt{4} & \texttt{2} & \texttt{14.064} & \scriptsize $\pm$ \texttt{0.378}  \\
-  \texttt{4} & \texttt{4} & \texttt{17.189} & \scriptsize $\pm$ \texttt{0.518}  \\
-  \texttt{2} & \texttt{1} & \texttt{21.997} & \scriptsize $\pm$ \texttt{0.457}  \\
-  \texttt{2} & \texttt{2} & \texttt{25.507} & \scriptsize $\pm$ \texttt{0.495}  \\
-  \texttt{2} & \texttt{4} & \texttt{28.921} & \scriptsize $\pm$ \texttt{0.757}  \\
-  \texttt{1} & \texttt{1} & \texttt{35.566} & \scriptsize $\pm$ \texttt{0.339}  \\
-  \texttt{1} & \texttt{2} & \texttt{37.328} & \scriptsize $\pm$ \texttt{0.909}  \\
-  \texttt{1} & \texttt{4} & \texttt{38.630} & \scriptsize $\pm$ \texttt{0.767}  \\
+  \texttt{4} & \texttt{1} & \texttt{ 5.314} & \scriptsize $\pm$ \texttt{0.304}  \\
+  \texttt{4} & \texttt{2} & \texttt{ 5.484} & \scriptsize $\pm$ \texttt{0.362}  \\
+  \texttt{4} & \texttt{4} & \texttt{ 5.607} & \scriptsize $\pm$ \texttt{0.159}  \\
+  \texttt{2} & \texttt{1} & \texttt{ 8.702} & \scriptsize $\pm$ \texttt{0.430}  \\
+  \texttt{2} & \texttt{2} & \texttt{ 9.527} & \scriptsize $\pm$ \texttt{0.259}  \\
+  \texttt{2} & \texttt{4} & \texttt{ 8.831} & \scriptsize $\pm$ \texttt{0.268}  \\
+  \texttt{1} & \texttt{1} & \texttt{12.430} & \scriptsize $\pm$ \texttt{1.514}  \\
+  \texttt{1} & \texttt{2} & \texttt{13.531} & \scriptsize $\pm$ \texttt{0.618}  \\
+  \texttt{1} & \texttt{4} & \texttt{14.513} & \scriptsize $\pm$ \texttt{0.554}  \\
   \end{tabular}
   \caption{The benchmark result when unmatched fine-grained classifier is skipped}
   \label{The benchmark result when unmatched fine-grained classifier is skipped}

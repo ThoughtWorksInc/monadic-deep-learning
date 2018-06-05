@@ -1031,9 +1031,11 @@ The benchmark result when training these models is shown in Table~\ref{The bench
   \texttt{1} & \texttt{2} & \texttt{13.531} & \scriptsize $\pm$ \texttt{0.618}  \\
   \texttt{1} & \texttt{4} & \texttt{14.513} & \scriptsize $\pm$ \texttt{0.554}  \\
   \end{tabular}
-  \caption{The benchmark result when unmatched fine-grained classifier is skipped}
-  \label{The benchmark result when unmatched fine-grained classifier is skipped}
+  \caption{The benchmark result when unmatched fine-grained classifiers are skipped}
+  \label{The benchmark result when unmatched fine-grained classifiers are skipped}
 \end{table}
+
+The benchmark result verified the performance improvement when increasing thread pool size, since DeepLearning.scala execute independent sub-networks in parallel. This benchmark also shows performance improvement when unmatched fine-grained classifiers are skipped.
 
 \section{Future Work}
 

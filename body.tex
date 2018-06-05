@@ -604,8 +604,8 @@ The \gls{computational graph} of \lstinline{computationalTree} is shown in Figur
 
   \begin{dot2tex}[dot,mathmode]
   digraph {
-    node [shape=circle]
     rankdir=RL
+    shape=circle
 
     y_0 -> x
     y_0 -> w_0
@@ -697,9 +697,10 @@ The \gls{computational graph} of \lstinline{diamondDependentComputationalGraph} 
 
   \begin{dot2tex}[dot,mathmode]
   digraph {
-    node [shape=circle]
     rankdir=RL
-    y_0->x
+    shape=circle
+
+	y_0->x
     y_0->w
     y_1->y_0
     y_1->y_0
@@ -856,22 +857,190 @@ We created some benchmarks to evaluate the computational performance of DeepLear
   \item the computational performance impact when part of a neural network is disabled.
 \end{enumerate}
 
-Those benchmarks are built with Jmh \cite{shipilevjmh}, measuring the number of mini-batches per second, for training neural networks that contain variant number of branches of sub-networks, as classifiers for CIFAR-100 dataset \cite{krizhevsky2009learning}. The architecture of the network used for benchmarks summarized in Figure~\ref{benchmark architecture 4}.
+Those benchmarks are built with Jmh \cite{shipilevjmh}, running on CPU, measuring the number of mini-batches per second, for training neural networks that contain variant number of branches of sub-networks, as classifiers for CIFAR-100 \cite{krizhevsky2009learning}, which is a dataset for image recognition, which has 100 fine-grained classes containing 600 images each. These fine-grained classes are grouped into 20 coarse-grained classes. 
+
+The architecture of the network used for benchmarks summarized in Figure~\ref{benchmark architecture}.
 
 \begin{figure}[h t b p]
-  \begin{dot2tex}[dot,mathmode,graphstyle={scale=0.5,transform shape}]
-  \input{benchmark.dot}
+  \begin{dot2tex}[dot,mathmode,autosize,graphstyle={scale=0.54,transform shape}]
+  digraph {
+    rankdir=RL
+    shape=circle
+    overlap=scale
+    nodesep=0.1
+    ranksep=0.1
+    rank=max
+
+    subgraph cluster_column_0 {
+      graph [ label="column_0" ]
+      "fc_{0,1}" [ label=dense ]
+      "fc_{0,0}" [ label=dense ]
+      "ReLU_{0,1}" [ label="ReLU" ]
+      "ReLU_{0,0}" [ label="ReLU" ]
+      
+      "ReLU_{0,1}" -> "fc_{0,1}" -> "ReLU_{0,0}" -> "fc_{0,0}"
+    }
+    subgraph cluster_column_1 {
+      graph [ label="column_1" ]
+      "fc_{1,1}" [ label=dense ]
+      "fc_{1,0}" [ label=dense ]
+      "ReLU_{1,1}" [ label="ReLU" ]
+      "ReLU_{1,0}" [ label="ReLU" ]
+      "ReLU_{1,1}" -> "fc_{1,1}" -> "ReLU_{1,0}" -> "fc_{1,0}"
+    }
+    
+    subgraph cluster_dots {
+      node [
+      	shape=none 
+      	label="{\vdots}" 
+      ]
+      graph [
+      	label=""
+        style=invis
+      ]
+      dots0 -> dots1 -> dots2 -> dots3 [ style=invis ]
+   	}
+
+    subgraph cluster_column_last {
+      graph [ label="column_{n-1}" ]
+      "fc_{n,1}" [ label=dense ]
+      "fc_{n,0}" [ label=dense ]
+      "ReLU_{n,1}" [ label="ReLU" ]
+      "ReLU_{n,0}" [ label="ReLU" ]
+      "ReLU_{n,1}" -> "fc_{n,1}" -> "ReLU_{n,0}" -> "fc_{n,0}"
+    }
+    
+    subgraph cluster_coarse {
+      graph [ label="coarse-grained-classifier" ]
+      fc_2 [ label=dense ]
+      softmax -> fc_2
+    }
+        
+    fc_2 -> "+"
+
+	"fc_{0,0}" -> input
+    "+" -> "ReLU_{0,1}"
+    
+    "fc_{1,0}" -> input
+    "+" -> "ReLU_{1,1}"
+    
+    dots3 -> input [ style=invis ]
+    "+" -> dots0 [ style=invis ]
+    
+    "fc_{n,0}" -> input
+    "+" -> "ReLU_{n,1}"
+    
+    subgraph cluster_fine_0 {
+      graph [ label="fine-grained-classifier_0" ]
+      softmax_0 [ label=softmax ]
+      "fc_{0,5}" [ label=dense ]
+      "fc_{0,4}" [ label=dense ]
+      "fc_{0,3}" [ label=dense ]
+      "ReLU_{0,4}" [ label=ReLU ]
+      "ReLU_{0,3}" [ label=ReLU ]
+
+      softmax_0 -> "fc_{0,5}" -> "ReLU_{0,4}" -> "fc_{0,4}" -> "ReLU_{0,3}" -> "fc_{0,3}"
+    }
+    
+    subgraph cluster_fine_1 {
+      graph [ label="fine-grained-classifier_1" ]
+      softmax_1 [ label=softmax ]
+      "fc_{1,5}" [ label=dense ]
+      "fc_{1,4}" [ label=dense ]
+      "fc_{1,3}" [ label=dense ]
+      "ReLU_{1,4}" [ label=ReLU ]
+      "ReLU_{1,3}" [ label=ReLU ]
+     "softmax_1" -> "fc_{1,5}" -> "ReLU_{1,4}" -> "fc_{1,4}" -> "ReLU_{1,3}" -> "fc_{1,3}"
+    }
+    
+    subgraph cluster_fine_dots {      
+      node [
+      	shape=none 
+      	label="{\vdots}" 
+      ]
+      graph [
+      	label=""
+        style=invis
+      ]
+      "dots4" -> "dots5" -> "dots5" -> "dots6" -> "dots7" -> "dots8" -> "dots9" [ style=invis ]
+    }
+    
+    subgraph cluster_fine_19 {
+      graph [ label="fine-grained-classifier_{19}" ]
+      softmax_19 [ label=softmax ]
+      "fc_{19,5}" [ label=dense ]
+      "fc_{19,4}" [ label=dense ]
+      "fc_{19,3}" [ label=dense ]
+      "ReLU_{19,4}" [ label=ReLU ]
+      "ReLU_{19,3}" [ label=ReLU ]
+      softmax_19 -> "fc_{19,5}" -> "ReLU_{19,4}" -> "fc_{19,4}" -> "ReLU_{19,3}" -> "fc_{19,3}"
+    }
+
+ 	"fc_{0,3}" -> "+"
+ 	"fc_{1,3}" -> "+"
+ 	"dots9" -> "+" [ style=invis ]
+ 	"fc_{19,3}" -> "+"
+  }
   \end{dot2tex}
   \caption{The models used for benchmarks}
-  \label{benchmark architecture 4}
+  \label{benchmark architecture}
 \end{figure}
 
-TODO 
-xxx
+We created $n$ columns \cite{ciregan2012multi} of experts sub-networks for feature extracting. The output from those experts are then summed for further layers and classifiers. Each column contains two dense layers
+\footnote{
+We use dense layers instead of convolution layers because the underlying N-dimensional array library ND4J is not able to efficiently perform immutable operation of convolution. See section~\ref{New Back-end} for discussion.
+}
+followed by ReLU activation layers. Those columns are independent, and we expect our framework can execute them in parallel when training or inference.
+
+Since CIFAR-100 dataset has both coarse-grained and fine-grained labels, we created a coarse-grained classifier and 20 fine-grained classifiers. The coarse-grained classifier contains a dense layer to convert features to scores of 20 coarse-grained classes, followed by a softmax layer. Each fine-grained classifier corresponding to a coarse-grained class contains three dense layers, two ReLU activation layers, and a softmax layer, classifying 5 fine-grained classes.
+
+We constructed mini-batches by coarse-grained class when training. All samples in a mini-batch belongs to one coarse-grained class. With the help of the feature of dynamic neural network in DeepLearning.scala, for each training iteration, only one fine-grained classifier is used, other 19 fine-grained classifiers are skipped. When inference, the fine-grained classifier is chosen dynamically according to the prediction by coarse-grained classifier. For comparison, we also created another set of benchmarks that do not skip unmatched fine-grained classifiers.
+
+The benchmark result is shown in Table~\ref{The benchmark result when unmatched fine-grained classifier is skipped} and Table~\ref{The benchmark result when no fine-grained classifier is skipped} (larger score is better):
+
+TODO: batch size = 8
+
+number of features 16
+
+\begin{table}[htbp]
+  \begin{tabular}{l|l|l|rl}
+  \texttt{number of branches} & \texttt{thread pool size} & \multicolumn{2}{c}{\texttt{Score, ops/s}} \\
+  \hline
+  \texttt{4} & \texttt{1} & \texttt{ 5.516} & \scriptsize $\pm$ \texttt{0.101}  \\
+  \texttt{4} & \texttt{2} & \texttt{ 7.351} & \scriptsize $\pm$ \texttt{0.164}  \\
+  \texttt{4} & \texttt{4} & \texttt{ 9.895} & \scriptsize $\pm$ \texttt{0.483}  \\
+  \texttt{2} & \texttt{1} & \texttt{ 6.824} & \scriptsize $\pm$ \texttt{0.101}  \\
+  \texttt{2} & \texttt{2} & \texttt{ 9.739} & \scriptsize $\pm$ \texttt{0.195}  \\
+  \texttt{2} & \texttt{4} & \texttt{11.920} & \scriptsize $\pm$ \texttt{0.480}  \\
+  \texttt{1} & \texttt{1} & \texttt{ 7.553} & \scriptsize $\pm$ \texttt{0.104}  \\
+  \texttt{1} & \texttt{2} & \texttt{10.269} & \scriptsize $\pm$ \texttt{0.126}  \\
+  \texttt{1} & \texttt{4} & \texttt{13.562} & \scriptsize $\pm$ \texttt{0.117}  \\
+  \end{tabular}
+  \caption{The benchmark result when no fine-grained classifier is skipped}
+  \label{The benchmark result when no fine-grained classifier is skipped}
+\end{table}
+
+\begin{table}[htbp]
+  \begin{tabular}{l|l|l|l|l|rl}
+  \texttt{number of branches} & \texttt{thread pool size} & \multicolumn{2}{c}{\texttt{Score, ops/s}} \\
+  \hline
+  \texttt{4} & \texttt{1} & \texttt{12.877} & \scriptsize $\pm$ \texttt{0.342}  \\
+  \texttt{4} & \texttt{2} & \texttt{14.064} & \scriptsize $\pm$ \texttt{0.378}  \\
+  \texttt{4} & \texttt{4} & \texttt{17.189} & \scriptsize $\pm$ \texttt{0.518}  \\
+  \texttt{2} & \texttt{1} & \texttt{21.997} & \scriptsize $\pm$ \texttt{0.457}  \\
+  \texttt{2} & \texttt{2} & \texttt{25.507} & \scriptsize $\pm$ \texttt{0.495}  \\
+  \texttt{2} & \texttt{4} & \texttt{28.921} & \scriptsize $\pm$ \texttt{0.757}  \\
+  \texttt{1} & \texttt{1} & \texttt{35.566} & \scriptsize $\pm$ \texttt{0.339}  \\
+  \texttt{1} & \texttt{2} & \texttt{37.328} & \scriptsize $\pm$ \texttt{0.909}  \\
+  \texttt{1} & \texttt{4} & \texttt{38.630} & \scriptsize $\pm$ \texttt{0.767}  \\
+  \end{tabular}
+  \caption{The benchmark result when unmatched fine-grained classifier is skipped}
+  \label{The benchmark result when unmatched fine-grained classifier is skipped}
+\end{table}
 
 \section{Future Work}
 
-\subsection{New Back-end}
+\subsection{New Back-end}\label{New Back-end}
 Currently, DeepLearning.scala 2's built-in differentiable vector expression type \lstinline{INDArrayLayer} is based on nd4j's \lstinline{INDArray} \cite{skymind2017nd4j}.
 As described in Section~\ref{training iteration}, in each training iteration, for each \gls{computational graph} node, \lstinline{forward} and \lstinline{backward} operations are performed, which internally call some methods on \lstinline{INDArray}, resulting in GPU kernel executions for nd4j's CUDA runtime. These ND4J operations have bad computational performance because:
 \begin{enumerate*}

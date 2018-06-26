@@ -1,7 +1,7 @@
 \section{Introduction}
 \label{introduction}
 
-Backpropagation \cite{rumelhart1985learning} is the key feature in many deep learning frameworks. Combining with other optimization algorithms \cite{kingma2014adam, zeiler2012adadelta,duchi2011adaptive}, deep learning frameworks change the values of trainable variables in neural networks during iterations, producing a model of knowledge learnt from training data.
+Backpropagation \cite{rumelhart1985learning} is the key feature in many deep learning frameworks. Combined with other optimization algorithms \cite{kingma2014adam, zeiler2012adadelta,duchi2011adaptive}, deep learning frameworks mutate the values of weights in neural networks during training, producing a model of knowledge learnt from training data.
 
 Backpropagation can be seen as a special-purpose Automatic Differentiation (AD) \cite{baydin2015automatic}. Many successful Python deep learning frameworks \cite{tokui2015chainer,google2017eager,paszke2017pytorch,neubig2017dynet} implement a common set of features of auto differentiation:
 
@@ -24,12 +24,12 @@ How to type a deep neural network as an AD control flow in a static typed langua
 
 In this paper, we present DeepLearning.scala, which is the first static typed implementation that achieves all the above goals for deep neural networks. Our approach is based on functional programming constructs, thus can be ported to Haskell, Idris and other statically typed functional programming languages.
 
-\section{BackGround and Related Works}
+\section{BackGround}
 Deep Neural Network has become the state of the art on many tasks, such as vision, game playing, voice recognition and natrual language translation.
 
-A neural network is a computation model that transform the input, which is typically a tensor, into output(also tensor), by repeated application of tensor operation (matrix multiplication, tensor resizing, elementwise operations, such as max, +, etc). A deep neural network just indicate that there are many such transformations taken.
+A neural network is a computation model that transform the input, which is a tensor, into output(also tensor), by repeated application of tensor operation (matrix multiplication, tensor resizing, elementwise operations, such as max, +, etc). A deep neural network just indicate that there are many such transformations taken.
 
-Additionally, a neural network has additional, hidden, inputs, called weights (also tensors), and deep learning is the task of finding the best weights for a neural network, such that a predefined objective (called loss) is minimized.
+Additionally, a neural network has additional hidden inputs, called weights (also tensors), and deep learning is the task of finding the best weights for a neural network, such that a predefined objective (called loss) is minimized.
 
 Most deep learning are supervised learning: in such task, there is also a dataset given, in which the data are pair of input and supposed output. The loss of such task is the difference of network output with supposed output.
 
@@ -1077,7 +1077,7 @@ We discovered the third mechanism of monadic deep learning. Neural networks in D
 
 \subsection{AD in a Functional Library}
 
-Reverse mode AD in a functional library was previously impossible to implement without the ability to reflectively access and transform expressions associated with closures \cite{pearlmutter2008reverse}. For example, if you want to create a \lstinline{transform} function that returns the derivative for given function \lstinline{f}:
+Reverse mode AD as a functional library was previously impossible to implement without the ability to reflectively access and transform expressions associated with closures \cite{pearlmutter2008reverse}. For example, if you want to create a \lstinline{transform} function that returns the derivative for given function \lstinline{f}:
 
 \begin{lstlisting}[float={h t b p},caption={Impossible transform function for AD}, label={transform}]
 def transform(f: Double => Double): Double => Double
@@ -1098,12 +1098,28 @@ Unlike \cite{pearlmutter2008reverse}'s compiler primitive $\overleftarrow{J}$, o
 
 We also change the derivative type to an opaque monadic type \lstinline{SideEffects}. Unlike \lstinline{Double} derivative, \lstinline{SideEffects} can contain derivatives for more than one \glspl{trainable variable}, although this change exclude the ability of higher order numerical differentiation.
 
+\section{Related Works}
+Pytorch
+Tensorflow
+Haskell AD
+Grenade
+BackProp
+Lantern
+
+To the best of author's knowledge, DeepLearning.scala is the only framework that encorproate the following:
+
+0: Pytorch style interoperability where arbitary construct from meta language could be used. (Dynamic computation graph)
+
+1: Statically typecheck the will-be-generated graph in metalanguage.
+
+2: Provide a purely functional interface.
+
 \section{Conclusion}
 
 DeepLearning.scala is the first framework that achieves all the following goals:
 
 \begin{itemize}
-  \item type safe
+  \item static type safety
   \item purely functional
   \item reverse mode AD
   \item multiple \glspl{trainable variable}

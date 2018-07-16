@@ -1,3 +1,4 @@
+
 \section{Introduction}
 \label{introduction}
 
@@ -190,9 +191,9 @@ for (iteration <- 0 until 500) {
 }
 \end{lstlisting}
 
-The weights and bias referenced by \lstinline{linearRegression} are modified during 500 iterations of training, toward the direction to minimize the loss returned from \lstinline{linearRegression}.
+The weights and bias referenced by \lstinline{linearRegression} are modified during 500 iterations of training, by stochastic gradient descent, to minimize the loss returned from \lstinline{linearRegression}.
 
-When weights and bias have been adjusted to make the loss a very small number, \lstinline{guessNextNumber} should return values that are very close to the expected answers.
+When weights and bias have been trained to make loss close to zero, \lstinline{guessNextNumber} should return values that are very close to the expected answers.
 
 \begin{lstlisting}[float={h t b p},caption={Inference on a trained model},label={predict_trained}]
 val question = Seq(42.0, 43.0, 44.0)

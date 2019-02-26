@@ -18,3 +18,4 @@
 .venv/
 *-dot2tex-fig*.dot
 *-dot2tex-fig*.tex
+*.synctex(busy)

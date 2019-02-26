@@ -1,10 +1,10 @@
 
-\section{Introduction}
-\label{Background and Introduction}
+\section{Background and Introduction}
+% \label{Background and Introduction}
 
-Deep Neural Network has become the state of the art on many tasks, such as vision, game playing, voice recognition and natrual language translation.
+Deep Neural Network has become the state of the art on many tasks, such as vision, game playing, voice recognition and natural language translation.
 
-A neural network is a computation model that transform the input, which is a tensor, into output(also tensor), by repeated application of tensor operation (matrix multiplication, tensor resizing, elementwise operations, such as max, +, etc). A deep neural network just indicate that there are many such transformations taken.
+A neural network is a computation model that transform the input, which is a tensor, into output(also tensor), by repeated application of tensor operation (matrix multiplication, tensor resizing, element-wise operations, such as max, +, etc). A ``deep'' neural network just indicates there are large amount of such transformations.
 
 Additionally, a neural network has additional hidden inputs, called weights (also tensors), and deep learning is the task of finding the best weights for a neural network, such that a predefined objective (called loss) is minimized.
 
@@ -12,7 +12,7 @@ Deep learning is mostly done using different variation of Gradient Descend: we c
 
 Thus, backpropagation \cite{rumelhart1985learning} is the key feature in many deep learning frameworks. Combined with other optimization algorithms \cite{kingma2014adam, zeiler2012adadelta,duchi2011adaptive}, deep learning frameworks mutate the values of weights in neural networks during training, producing a model of knowledge learnt from training data.
 
-Backpropagation can be seen as a specialized instance of Automatic Differentiation (AD) \cite{baydin2015automatic}. Many successful Python deep learning frameworks \cite{tokui2015chainer,google2017eager,paszke2017pytorch,neubig2017dynet} implement a common set of features of auto differentiation:
+Backpropagation can be considered as a specialized instance of Automatic Differentiation (AD) \cite{baydin2015automatic}. Many successful Python deep learning frameworks \cite{tokui2015chainer,google2017eager,paszke2017pytorch,neubig2017dynet} implement a common set of features of auto differentiation:
 
 \begin{description}
 
@@ -22,14 +22,14 @@ Backpropagation can be seen as a specialized instance of Automatic Differentiati
 
   \item[Internal DSL \cite{fowler2010domain}] All these deep learning frameworks are libraries that provide an Internal DSL, allowing users to create their differentiable functions in Python or Lua from similar expressions as creating ordinary non-differentiable functions. Since these frameworks do not require external language, models created by them can be easy integrated into a larger application alone with higher-level configurations \cite{chollet2015keras} or ETL (Extract, Transform and Load) process.
 
-  \item Deep learning framework using Dynamic Graph approch allow one to reuse whatever construct already available in the metalanguage (closure, object, list, tree, control flow, excpetion, etc, and preexisting function over them)
+  \item Deep learning framework using Dynamic Graph approach allow one to reuse whatever construct already available in the metalanguage (closure, object, list, tree, control flow, exception, etc, and preexisting function over them)
 
   \item Deep Learning framework let you define weight, or trainable variable, and the framework can automatically do gradient descend over them, without users having to manually manage them.
 
 \end{description}
 
 However, most of the deep learning framework are in python, which is dynamically typed.
-Hence, it is not clear how to design a dl framework in a statically typed language, such that the dsl itself can enjoy the static type checking of the metalanguage, using technique such as final tagless or GADT.
+Hence, it is not clear how to design the framework in a statically typed language, such that the DSL itself can enjoy the static type checking of the metalanguage, using technique such as final tagless or GADT.
 
 Unfortunately, deep learning frameworks in statically typed languages have not achieved the above goals until 2017.
 Several AD libraries \cite{bischof1992adifor,griewank1996algorithm,TapenadeRef13,baydin2015diffsharp} written in Fortran, C++ or F\# support AD via operator overloading or external preprocessor but do not scale to deep neural networks, either due to using forward mode or lacking the feature of multiple trainable variables.
@@ -272,7 +272,6 @@ However, there is a performance issue in the \lstinline{naiveGatedNet}.
 In DeepLearning.scala, all differentiable expressions, including the scalar \lstinline{DoubleLayer} and vectorized \lstinline{INDArrayLayer}, contain some lazily evaluated differentiable \gls{computational graph} nodes, which will not be executed until their asynchronous task returned from \lstinline{predict} or \lstinline{train} is performed in a \lstinline{blockingAwait} or \lstinline{onComplete} calls.
 
 So, the two \lstinline{predict.blockingAwait} calls in the \lstinline{if} will execute the \gls{computational graph} in \lstinline{gate} twice. Also the \gls{computational graph} in \lstinline{naiveGatedNet} will be executed when users call \lstinline{predict} or \lstinline{train} call \lstinline{naiveGatedNet} in the future. Even worse, \lstinline{input} contains a \gls{computational graph}, too. Along with \lstinline{gate}, it will be evaluated three times, which may contain complex future extracting process.
-*THIS LOOK VERY WRONG. EVERY LAZY SYSTEM WILL INTERNALLY MAKE SURE IT IS ONLY EVALED ONCE*
 
 \subsection{Monadic Control Flow (good)}
 \label{monadic}
@@ -482,7 +481,10 @@ object DualNumber {
 
 However, it is hard to type this approach if we want to support multiple \glspl{trainable variable}, with the number unknown before runtime. \lstinline{PartialDelta} in Listing~\ref{DualNumber} represents the partial derivative of \glspl{trainable variable}. In AD tools that support only one \gls{trainable variable}, the \gls{trainable variable} is usually forced to be the input. Hence \lstinline{PartialDelta} is the input type for those AD tools. This assumption is broken for our case, since our delta type of a specific \lstinline{DualNumber} must contain derivatives for all \glspl{trainable variable} that were used to produce the \lstinline{DualNumber}, not only the partial derivative of input. As a result, the type of delta varies when the number of \glspl{trainable variable} grows.
 
-To type-check the delta, considering the only usage of the delta in a neural network is in updating \glspl{trainable variable} in a gradient descent based optimization algorithm. We can replace \lstinline{PartialDelta} to a \lstinline{UpdateWeights} closure Listing~\ref{class ClosureBasedDualNumber}. In order to implement arithmetic operations for the new dual number, the operations on \lstinline{PartialDelta} should be replaced to custom functions for \lstinline{UpdateWeights} (Listing~\ref{object ClosureBasedDualNumber}).
+To type-check the delta, considering the only usage of the delta in a neural network is in updating \glspl{trainable variable} in a gradient descent based optimization algorithm, we can replace \lstinline{PartialDelta} to an \lstinline{UpdateWeights} closure Listing~\ref{class ClosureBasedDualNumber}.
+
+TODO: 
+In order to implement arithmetic operations for the new dual number, the operations on \lstinline{PartialDelta} should be replaced to custom functions for \lstinline{UpdateWeights} (Listing~\ref{object ClosureBasedDualNumber}).
 
 *THIS IS NOT CUSTOM FUNCTION - AT THIS POINT WE ONLY KNOW THERE IS SOME UNKNOWN TYPE OF UPDATEWEIGHTS, A BETTER TERM WILL BE UNKNOWN TYPE*
 \begin{lstlisting}[float={h t b p},caption={Replacing \lstinline{PartialDelta} to a closure}, label={class ClosureBasedDualNumber}]
@@ -995,7 +997,7 @@ Since CIFAR-100 dataset has both coarse-grained and fine-grained labels, we crea
 We constructed mini-batches by coarse-grained class when training. All samples in a mini-batch belongs to one coarse-grained class. With the help of the feature of dynamic neural network in DeepLearning.scala, for each training iteration, only one fine-grained classifier is used, other 19 fine-grained classifiers are skipped. When inference, the fine-grained classifier is chosen dynamically according to the prediction by coarse-grained classifier. For comparison, we also created another set of benchmarks that do not skip unmatched fine-grained classifiers.
 
 
-The benchmark result when training these models is shown in Table~\ref{The benchmark result when unmatched fine-grained classifier is skipped} and Table~\ref{The benchmark result when no fine-grained classifier is skipped} (larger score is better). The sizes of those dense layers previous to softmax layers in these models are the number of classes (20 for coarse-grained classifier, 5 for fine-grained classifiers). Other dense layers output 64 features. These models are trained in a SGD optimizer with batch size 16. Both the number of columns in each model and the number of threads used in training vary among benchmarks.
+The benchmark result when training these models is shown in Table~\ref{benchmark-dont-skip-fine-grained} and Table~\ref{benchmark-skip-fine-grained} (larger score is better). The sizes of those dense layers previous to softmax layers in these models are the number of classes (20 for coarse-grained classifier, 5 for fine-grained classifiers). Other dense layers output 64 features. These models are trained in a SGD optimizer with batch size 16. Both the number of columns in each model and the number of threads used in training vary among benchmarks.
 
 \begin{table}[htbp]
   \begin{tabular}{l|l|l|rl}
@@ -1012,7 +1014,7 @@ The benchmark result when training these models is shown in Table~\ref{The bench
   \texttt{1} & \texttt{4} & \texttt{6.328} & \scriptsize $\pm$ \texttt{0.058}  \\
   \end{tabular}
   \caption{The benchmark result when no fine-grained classifier is skipped}
-  \label{The benchmark result when no fine-grained classifier is skipped}
+  \label{benchmark-dont-skip-fine-grained}
 \end{table}
 
 \begin{table}[htbp]
@@ -1030,7 +1032,7 @@ The benchmark result when training these models is shown in Table~\ref{The bench
   \texttt{1} & \texttt{4} & \texttt{14.513} & \scriptsize $\pm$ \texttt{0.554}  \\
   \end{tabular}
   \caption{The benchmark result when unmatched fine-grained classifiers are skipped}
-  \label{The benchmark result when unmatched fine-grained classifiers are skipped}
+  \label{benchmark-skip-fine-grained}
 \end{table}
 
 The benchmark result verified the performance improvement when increasing thread pool size, since DeepLearning.scala execute independent sub-networks in parallel. This benchmark also shows performance improvement when unmatched fine-grained classifiers are skipped.

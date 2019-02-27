@@ -1,9 +1,18 @@
-\section{Introduction}
-\label{introduction}
 
-Backpropagation \cite{rumelhart1985learning} is the key feature in many deep learning frameworks. Combining with other optimization algorithms \cite{kingma2014adam, zeiler2012adadelta,duchi2011adaptive}, deep learning frameworks change the values of trainable variables in neural networks during iterations, producing a model of knowledge learnt from training data.
+\section{Background and Introduction}
+% \label{Background and Introduction}
 
-Backpropagation can be seen as a special-purpose Automatic Differentiation (AD) \cite{baydin2015automatic}. Many successful Python deep learning frameworks \cite{tokui2015chainer,google2017eager,paszke2017pytorch,neubig2017dynet} implement a common set of features of auto differentiation:
+Deep neural networks have become the state of the art on many tasks, such as vision, game playing, voice recognition and natural language translation.
+
+A neural network is a computation model that transforms the input, into output, by repeated application of tensor operations (including matrix multiplication, tensor resizing, element-wise operations, such as max, +, etc). A ``deep'' neural network just indicates there are large amount of such transformations.
+
+Additionally, a neural network has additional hidden inputs, called parameters or weights, and deep learning is the task of finding the best weights for a neural network, such that a predefined objective (called loss) is minimized.
+
+Deep learning is mostly done using different variation of gradient descend: we calculate the first order derivative of the loss function with respect to the weight, and update the weight accordingly. The processed is called backpropagation.
+
+Thus, backpropagation \cite{rumelhart1985learning} is the key feature in many deep learning frameworks. Combined with other optimization algorithms \cite{kingma2014adam, zeiler2012adadelta,duchi2011adaptive}, deep learning frameworks mutate the values of weights in neural networks during training, producing a model of knowledge learnt from training data.
+
+Backpropagation can be considered as a specialized instance of Automatic Differentiation (AD) \cite{baydin2015automatic}. Many successful Python deep learning frameworks \cite{tokui2015chainer,google2017eager,paszke2017pytorch,neubig2017dynet} implement a common set of features of auto differentiation:
 
 \begin{description}
 
@@ -13,41 +22,28 @@ Backpropagation can be seen as a special-purpose Automatic Differentiation (AD) 
 
   \item[Internal DSL \cite{fowler2010domain}] All these deep learning frameworks are libraries that provide an Internal DSL, allowing users to create their differentiable functions in Python or Lua from similar expressions as creating ordinary non-differentiable functions. Since these frameworks do not require external language, models created by them can be easy integrated into a larger application alone with higher-level configurations \cite{chollet2015keras} or ETL (Extract, Transform and Load) process.
 
+  % \item Deep learning framework using Dynamic Graph approach allow one to reuse whatever construct already available in the metalanguage (closure, object, list, tree, control flow, exception, etc, and preexisting function over them)
+
+  % \item Deep Learning framework let you define weight, or trainable variable, and the framework can automatically do gradient descend over them, without users having to manually manage them.
+
 \end{description}
+
+However, most of the deep learning framework are in python, which is dynamically typed.
+Hence, it is not clear how to design the framework in a statically typed language, such that the DSL itself can enjoy the static type checking of the metalanguage, using technique such as final tagless or GADT.
 
 Unfortunately, deep learning frameworks in statically typed languages have not achieved the above goals until 2017.
 Several AD libraries \cite{bischof1992adifor,griewank1996algorithm,TapenadeRef13,baydin2015diffsharp} written in Fortran, C++ or F\# support AD via operator overloading or external preprocessor but do not scale to deep neural networks, either due to using forward mode or lacking the feature of multiple trainable variables.
 
 Other deep learning frameworks in statically typed languages (including Scala binding of C++ frameworks) \cite{intel2016bigdl,skymind2017deeplearning4j,baydin2016hype,chen2017typesafe,zhao2017deepdsl} do not support AD, instead, they only provide their high level \gls{computational graph} APIs to compose predefined layers into neural networks. As a result, those frameworks do not have the ability to create fine-grained custom algorithms.
 
-How to type a deep neural network as an AD control flow in a static typed language is still an open problem.
+Typing deep neural networks with control flow in a static typed language is still an open problem.
 
 In this paper, we present DeepLearning.scala, which is the first static typed implementation that achieves all the above goals for deep neural networks. Our approach is based on functional programming constructs, thus can be ported to Haskell, Idris and other statically typed functional programming languages.
-
-\section{BackGround and Related Works}
-Deep Neural Network has become the state of the art on many tasks, such as vision, game playing, voice recognition and natrual language translation.
-
-A neural network is a computation model that transform the input, which is typically a tensor, into output(also tensor), by repeated application of tensor operation (matrix multiplication, tensor resizing, elementwise operations, such as max, +, etc). A deep neural network just indicate that there are many such transformations taken.
-
-Additionally, a neural network has additional, hidden, inputs, called weights (also tensors), and deep learning is the task of finding the best weights for a neural network, such that a predefined objective (called loss) is minimized.
-
-Most deep learning are supervised learning: in such task, there is also a dataset given, in which the data are pair of input and supposed output. The loss of such task is the difference of network output with supposed output.
-
-Deep learning is mostly done using different variation of Gradient Descend: we calculate the first order derivative of the loss function with respect to the weight, and update the weight accordingly. Since calculating the loss for supervised learning might be computationally expensive when the size of dataset is large, we commonly calculate the loss(and it's derivative) using only a randomly selected part of the dataset everytime we update our weight. This is refered as stochastic gradient descent.
-
-A deep learning framework is a DSL specialize for two features: automatic differentiation (which mean autmoatically computing the gradient of a function), and fast execution for tensor operations.
-
-However, most of the deep learning framework are in python, which is dynamically typed.
-Hence, it is not clear how to design a dl framework in a statically typed language, such that the dsl itself can enjoy the static type checking of the metalanguage, using technique such as final tagless or GADT.
-
-Another challenge is to encoprate advance, non first order language construct, such as closure, algebraic data type, or exception into the dsl. Although there are research on implementing automatic differentiation on a scheme dialect, it is unclear how to do so efficently in a statically typed language.
-
-We present DeepLearning.scala, which is a shallow embedding across scala that aim to provide a typed EDSL in scala for deep learning.
 
 \section{Basic Concepts}
 \label{concepts}
 
-For example, suppose we are building a robot for answering questions in IQ test like this:
+For example, suppose we are building a model for predicting numbers generated by integer sequence:
 
 \begin{quote}
   What is the next number in sequence:
@@ -57,7 +53,7 @@ For example, suppose we are building a robot for answering questions in IQ test 
   The answer is 12.
 \end{quote}
 
-In DeepLearning.scala, the robot can be implemented as a \lstinline{guessNextNumber} function as following\footnote{The code examples from Listing~\ref{guessNextNumber} to Listing~\ref{predict_trained} do not contain necessary \lstinline{import} and configurations. For a runnable IQ test robot example backed by ND4J \cite{skymind2017nd4j}, see \href{http://deeplearning.thoughtworks.school/demo/GettingStarted.html}{Getting Started documentation on DeepLearning.scala website}.}:
+In DeepLearning.scala, the robot can be implemented as a \lstinline{guessNextNumber} function as following\footnote{The code examples from Listing~\ref{guessNextNumber} to Listing~\ref{predict_trained} do not contain necessary \lstinline{import} and configurations. For an executable model backed by ND4J \cite{skymind2017nd4j}, see \href{http://deeplearning.thoughtworks.school/demo/GettingStarted.html}{Getting Started documentation on DeepLearning.scala website}.}:
 
 \begin{lstlisting}[float={h t b p},caption={The differentiable matrix multiplication implemented by \lstinline{map}/\lstinline{reduce}},label={guessNextNumber}]
 // Weight initialization
@@ -65,16 +61,16 @@ val weights: Seq[DoubleWeight] = Stream.continually(DoubleWeight(math.random))
 val bias: DoubleWeight = DoubleWeight(math.random)
 
 def guessNextNumber(question: Seq[Double]): DoubleLayer = {
-  // Perform a matrix multiplication between question and weights
+  // Perform a dot product between question and weights
   (question zip weights).map {
     case (element, weight) => element * weight
   }.reduce(_ + _) + bias
 }
 \end{lstlisting}
 
-\lstinline{guessNextNumber} performs a matrix multiplication between question and weights by invoking higher-order functions \lstinline{map} and \lstinline{reduce}. 
+\lstinline{guessNextNumber} performs a dot product between question and weights by invoking higher-order functions \lstinline{map} and \lstinline{reduce}. 
 
-Unlike \cite{chen2017typesafe}'s special tensor type, our tensor can be simply typed as \lstinline{Seq[Double]}, \lstinline{Seq[DoubleWeight]} or \lstinline{Seq[DoubleLayer]}.
+Unlike \cite{chen2017typesafe}'s special tensor type, our tensor can be typed simply as \lstinline{Seq[Double]}, \lstinline{Seq[DoubleWeight]} or \lstinline{Seq[DoubleLayer]}.
 \footnote{DeepLearning.scala users can use other representations of tensors:
 \begin{enumerate*}
   \item For tensors with a statically typed shape, use \href{https://javadoc.io/page/com.chuusai/shapeless_2.11/latest/shapeless/Sized.html}{ \lstinline{shapeless.Sized}}. For example a $10\times20$ two-dimensional tensor can be typed as \lstinline{Sized[Sized[Double, _10], _20]}. For differentiable tensors, replace vanilla \lstinline{Double} to \lstinline{DoubleWeight} or \lstinline{DoubleLayer}.
@@ -84,9 +80,10 @@ Unlike \cite{chen2017typesafe}'s special tensor type, our tensor can be simply t
 
 The return value of \lstinline{guessNextNumber}, along with temporary variables in \lstinline{guessNextNumber}, are \lstinline{DoubleLayer}s, which are \glspl{differentiable expression}.
 
-The \lstinline{weights} and \lstinline{bias} contains some \lstinline{DoubleWeight} referenced by \lstinline{guessNextNumber} must be initialized first. Those are \glspl{trainable variable}.
+The \lstinline{weights} and \lstinline{bias} contains some \lstinline{DoubleWeight} that are referenced by \lstinline{guessNextNumber}.
+They must be initialized before executing the model. Those are \glspl{trainable variable}.
 
-From the user's point of view, both \lstinline{DoubleLayer} and \lstinline{DoubleWeight} are opacity types similar to ordinary \lstinline{scala.Double}. Most of operators of \lstinline{scala.Double} are also available on \lstinline{DoubleLayer}  and \lstinline{DoubleWeight}, except those operators are differentiable. For now, you can think of the type signature of multiplication operator as if the Listing~\ref{hypothetical differentiable types}, and we will reveal the real type signature of \lstinline{*} in Section~\ref{Ad Hoc Polymorphism}.
+From the user's point of view, both \lstinline{DoubleLayer} and \lstinline{DoubleWeight} are opaque types similar to ordinary \lstinline{scala.Double}. Most of operators of \lstinline{scala.Double} are also available on \lstinline{DoubleLayer}  and \lstinline{DoubleWeight}, except those operators are differentiable. For now, type signature of multiplication operator as can be seen as if the Listing~\ref{hypothetical differentiable types}, and we will reveal the real type signature of \lstinline{*} in Section~\ref{Ad Hoc Polymorphism}.
 
 \begin{lstlisting}[float={h t b p},caption={The hypothetical type signature of multiplication operator for \lstinline{DoubleLayer} and \lstinline{DoubleWeight}},label={hypothetical differentiable types}]
 trait DoubleLayer {
@@ -130,7 +127,7 @@ Table~\ref{differentiable types} lists DeepLearning.scala built-in differentiabl
 \end{table}
 
 
-In addition to differentiable operations, \lstinline{Layer}s and \lstinline{Weight}s can be evaluated with a \lstinline{predict} method, thus, the robot can answer IQ test questions like calling an ordinary function, shown in Listing~\ref{predict}. 
+In addition to differentiable operations, \lstinline{Layer}s and \lstinline{Weight}s can be evaluated with a \lstinline{predict} method, thus, the model can predict next Integer by calling an ordinary function, shown in Listing~\ref{predict}. 
 You may notice the \lstinline{blockingAwait} suffix appended to \lstinline{predict}, because \lstinline{predict} returns a \lstinline{Future[Double]}
 \footnote{ 
   For readers familiar to Haskell, you can understand \lstinline{Future} from the corresponding types in Haskell:
@@ -143,7 +140,7 @@ You may notice the \lstinline{blockingAwait} suffix appended to \lstinline{predi
   All the above types are general purpose libraries, not parts of DeepLearning.scala. We use those continuation based monadic data types to archive the ability of parallel and asynchronous execution.
 }
 , which contains the asynchronous task to compute the result. The actual computation is not performed in  \lstinline{predict} until \lstinline{blockingAwait} is invoked \footnote{
-  When \lstinline{predict} is used in a real world scenario (e.g. running a neural network in a web service), \lstinline{blockingAwait} should be replaced to \lstinline{flatMap}, in case of blocking the current thread, which is an expensive resource. We use this \lstinline{blockingAwait} here because it's more straightforward for understanding.
+  When \lstinline{predict} is used in a real world scenario (e.g. running a neural network in a web service), \lstinline{blockingAwait} should be replaced to \lstinline{flatMap}, in stead of blocking the current thread, which is an expensive resource. We use this \lstinline{blockingAwait} here because it's more straightforward for understanding.
 }.
 
 \begin{lstlisting}[float={h t b p},caption={Inference on an untrained model},label={predict}]
@@ -151,7 +148,7 @@ val question = Seq(42.0, 43.0, 44.0)
 println(guessNextNumber(question).predict.blockingAwait)
 \end{lstlisting}
 
-However, \lstinline{guessNextNumber} returned an incorrect result because the weights and bias were randomly initialized, which have not been trained.
+However, \lstinline{guessNextNumber} returned an incorrect result because the weights and bias were randomly initialized, and have not been trained.
 
 In order to train them, a loss function is necessary:
 
@@ -188,21 +185,22 @@ for (iteration <- 0 until 500) {
 }
 \end{lstlisting}
 
-The weights and bias referenced by \lstinline{linearRegression} are modified during 500 iterations of training, toward the direction to minimize the loss returned from \lstinline{linearRegression}.
+The weights and bias referenced by \lstinline{linearRegression} are modified during 500 iterations of training, by stochastic gradient descent, to minimize the loss returned from \lstinline{linearRegression}.
 
-When weights and bias have been adjusted to make the loss a very small number, \lstinline{guessNextNumber} should return values that are very close to the expected answers.
+When weights and bias have been trained to make loss close to zero, \lstinline{guessNextNumber} should return values that are very close to the expected answers.
 
 \begin{lstlisting}[float={h t b p},caption={Inference on a trained model},label={predict_trained}]
 val question = Seq(42.0, 43.0, 44.0)
 println(guessNextNumber(question).predict.blockingAwait)
 \end{lstlisting}
 
-This time, it will print a number closed to 45, because the IQ test robot have finally learned the pattern of arithmetic progression.
+This time, it will print a number closed to 45, as the model have finally learned the pattern of arithmetic progression.
 
-The IQ test robot example shows some basic concepts in DeepLearning.scala.
+The above example shows some basic concepts in DeepLearning.scala.
 
 \begin{itemize}
   \item \lstinline{guessNextNumber}, \lstinline{squareLoss} and \lstinline{linearRegression} are \glspl{differentiable function} that return \glspl{differentiable expression}, which are \gls{computational graph} nodes that can be evaluated when \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html#train(differentiable:Differentiable)(implicitmonoid:algebra.ring.MultiplicativeMonoid[DeepLearning.this.Delta]):com.thoughtworks.future.Future[DeepLearning.this.Data]}{\lstinline{train}}ing or \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html#predict(differentiable:Differentiable):com.thoughtworks.future.Future[DeepLearning.this.Data]}{\lstinline{predict}}ing.
+  % TODO: TRAINING/PREDICTING SHOULD BE FULLY HYPERLINKED
   \item \Glspl{differentiable expression} and \glspl{trainable variable} can be used as if they are ordinary non-differentiable values. For example, as shown in Listing~\ref{squareLoss}, you can perform scalar subtraction and multiplication between \lstinline{DoubleWeight}, \lstinline{DoubleLayer} and ordinary \lstinline{scala.Double}.
   \item When \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html#train(differentiable:Differentiable)(implicitmonoid:algebra.ring.MultiplicativeMonoid[DeepLearning.this.Delta]):com.thoughtworks.future.Future[DeepLearning.this.Data]}{\lstinline{train}}ing a \gls{differentiable expression}, it returns a \href{https://javadoc.io/page/com.thoughtworks.future/future_2.11/latest/com/thoughtworks/future%24%24Future.html}{\lstinline{Future}}, which encapsulates the side-effect of adjusting \glspl{trainable variable} referenced by the \gls{differentiable function}.
   \item If a \gls{differentiable function} invokes another \gls{differentiable function}, then \glspl{trainable variable} trained by one \gls{differentiable function} affect another one. For example, when training the \gls{differentiable function} \lstinline{linearRegression}, The \glspl{trainable variable} \lstinline{weights} and \lstinline{bias} are modified, hence \lstinline{guessNextNumber} automatically gains the ability to \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html#predict(differentiable:Differentiable):com.thoughtworks.future.Future[DeepLearning.this.Data]}{\lstinline{predict}} correct answers.
@@ -210,7 +208,7 @@ The IQ test robot example shows some basic concepts in DeepLearning.scala.
 
 \section{Dynamic Neural Networks}
 
-DeepLearning.scala supports dynamic neural networks. It means that the control flow of a neural network can differ according to values of internal nodes of the computational graph, when processing a special input. This is the key feature of recent deep learning frameworks like PyTorch \cite{paszke2017pytorch} or Chainer \cite{tokui2015chainer}. Especially, dynamic deep neural networks can be more efficient by skipping part of the model \cite{liu2017dynamic}.
+DeepLearning.scala supports dynamic neural networks. It means that the control flow of a neural network can differ according to values of internal nodes of the computational graph, when processing a specific batch of input. This is the key feature of recent deep learning frameworks like PyTorch \cite{paszke2017pytorch} or Chainer \cite{tokui2015chainer}. Especially, dynamic deep neural networks can be more efficient by skipping part of the model \cite{liu2017dynamic}.
 
 In this section, we will present how to create a simple dynamic neural network in DeepLearning.scala, which can be considered as a simplified version of outrageously large neural networks \cite{shazeer2017outrageously}.
 
@@ -253,7 +251,7 @@ In DeepLearning.scala, there are three different approaches to implement the gat
 \subsection{Eager Execution (bad)}
 \label{eager}
 
-An obvious approach to create the gated network is eagerly executing the \lstinline{gate}, shown in Listing~\ref{naiveGatedNet}:
+An obvious approach to create the gated network is to eagerly execute the \lstinline{gate}, shown in Listing~\ref{naiveGatedNet}:
 
 \begin{lstlisting}[float={h t b p},caption={The eager execution implementation of gated network}, label={naiveGatedNet}]
 def naiveGatedNet(input: INDArrayLayer): INDArrayLayer = {
@@ -272,14 +270,14 @@ However, there is a performance issue in the \lstinline{naiveGatedNet}.
 
 In DeepLearning.scala, all differentiable expressions, including the scalar \lstinline{DoubleLayer} and vectorized \lstinline{INDArrayLayer}, contain some lazily evaluated differentiable \gls{computational graph} nodes, which will not be executed until their asynchronous task returned from \lstinline{predict} or \lstinline{train} is performed in a \lstinline{blockingAwait} or \lstinline{onComplete} calls.
 
-So, the two \lstinline{predict.blockingAwait} calls in the \lstinline{if} will execute the \gls{computational graph} in \lstinline{gate} twice. Also the \gls{computational graph} in \lstinline{naiveGatedNet} will be executed when users call \lstinline{predict} or \lstinline{train} call \lstinline{naiveGatedNet} in the future. But what's even worse is, \lstinline{input} contains a \gls{computational graph}, too. Along with \lstinline{gate}, it will be evaluated three times, which may contain complex future extracting process.
+So, the two \lstinline{predict.blockingAwait} calls in the \lstinline{if} will execute the \gls{computational graph} in \lstinline{gate} twice. Also the \gls{computational graph} in \lstinline{naiveGatedNet} will be executed when users call \lstinline{predict} or \lstinline{train} call \lstinline{naiveGatedNet} in the future. Even worse, \lstinline{input} contains a \gls{computational graph}, too. Along with \lstinline{gate}, it will be evaluated three times, which may contain complex future extracting process.
 
 \subsection{Monadic Control Flow (good)}
 \label{monadic}
 
 Ideally, the calls to \lstinline{predict} should be avoided in differentiable functions. The recommended approach to create a dynamic neural network is using \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning.html#forward(differentiable:Differentiable):com.thoughtworks.raii.asynchronous.Do[com.thoughtworks.deeplearning.DeepLearning.Tape[DeepLearning.this.Data,DeepLearning.this.Delta]]}{\lstinline{forward}}, which returns a monadic value of \lstinline{Do[Tape[Data, Delta]]}, which can be used in a monadic control flow via Scalaz \cite{kenji2017scalaz}'s type classes \cite{oliveira2010type} \lstinline{Monad} and \lstinline{Applicative}.
 
-Listing~\ref{monadicGatedNet} shows the monadic control flow of gated network.
+Listing~\ref{monadicGatedNet} shows the monadic control flow of gated network. The gated network is built from the monadic expression \lstinline{gatedForward}, which contains some \lstinline{forward} calls, which are asynchronous operations (or \href{https://javadoc.io/page/com.thoughtworks.raii/asynchronous_2.11/latest/com/thoughtworks/raii/asynchronous%24%24Do.html}{\lstinline{Do}}) that produce Wengert list record (or \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning%24%24Tape.html}{\lstinline{Tape}}). The implementation detail of \lstinline{Do} and \lstinline{Tape} will be discussed in Section~\ref{implementation}. For now, we only need to know that \lstinline{Do} is a monadic data type that supports \lstinline{flatMap}.
 
 \begin{lstlisting}[float={h t b p},caption={Monadic gated network}, label={monadicGatedNet}]
 def monadicGatedNet(input: INDArrayLayer): INDArrayLayer = {
@@ -299,7 +297,7 @@ def monadicGatedNet(input: INDArrayLayer): INDArrayLayer = {
 }
 \end{lstlisting}
 
-This gated network is built from the monadic expression \lstinline{gatedForward}, which contains some \lstinline{forward} calls, which are asynchronous operations (or \href{https://javadoc.io/page/com.thoughtworks.raii/asynchronous_2.11/latest/com/thoughtworks/raii/asynchronous%24%24Do.html}{\lstinline{Do}}) that produce Wengert list record (or \href{https://javadoc.io/page/com.thoughtworks.deeplearning/deeplearning_2.11/latest/com/thoughtworks/deeplearning/DeepLearning%24%24Tape.html}{\lstinline{Tape}}). The implementation detail of \lstinline{Do} and \lstinline{Tape} will be discussed in Section~\ref{implementation}. For now, we only need to know that \lstinline{Do} is a monadic data type that supports \lstinline{flatMap}. By \lstinline{flatMap}ping those \lstinline{forward} operations together, we built the entire monadic control flow \lstinline{gatedForward} for the gated network.
+By \lstinline{flatMap}ping those \lstinline{forward} operations together, we built the entire monadic control flow \lstinline{gatedForward} for the gated network.
 
 The \lstinline{monadicGatedNet} represents a dynamic neural network, since each \lstinline{forward} operation is started after its previous \lstinline{forward} done. This behavior allows dynamically determining succeeding operations according to result of previous \lstinline{forward} operations, as shown in the \lstinline{if} clause in Listing~\ref{monadicGatedNet}.
 
@@ -368,7 +366,7 @@ def dslGatedNet(input: INDArrayLayer): INDArrayLayer = {
 }
 \end{lstlisting}
 
-Generally, a !-notation on a \lstinline{Layer} will generate monadic a \lstinline{flatMap} call, to extract the value of forward pass of the \lstinline{Layer}; a !-notation on a tuple of \lstinline{Layer}s will generate some applicative \lstinline{<*>} and \lstinline{map} calls, to extract a tuple of values of forward pass of those \lstinline{Layer}s, in parallel. Thus, the actually code generated by Dsl.scala's compiler plugins for Listing~\ref{dslGatedNet} is similar to Listing~\ref{applicativeMonadicGatedNet}.
+Generally, a !-notation on a \lstinline{Layer} will generate a monadic \lstinline{flatMap} call, to extract the value of forward pass of the \lstinline{Layer}; a !-notation on a tuple of \lstinline{Layer}s will generate some applicative \lstinline{<*>} and \lstinline{map} calls, to extract a tuple of values of forward pass of those \lstinline{Layer}s, in parallel. Thus, the actually code generated by Dsl.scala's compiler plugins for Listing~\ref{dslGatedNet} is similar to Listing~\ref{applicativeMonadicGatedNet}.
 
 \section{Ad Hoc Polymorphic Differentiable Functions}
 \label{Ad Hoc Polymorphism} 
@@ -480,14 +478,16 @@ object DualNumber {
 \subsection{Monadic Closure-based Dual Number}
 \label{monadic dual number}
 
-However, this approach is hard to type-check if we want to support multiple  \glspl{trainable variable}. \lstinline{PartialDelta} in Listing~\ref{DualNumber} represents the partial derivative of \glspl{trainable variable}. In AD tools that support only one \gls{trainable variable}, the \gls{trainable variable} is usually forced to be the input. Hence \lstinline{PartialDelta} is the input type for those AD tools. This assumption is broken for our case, since our delta type of a specific \lstinline{DualNumber} must contain derivatives for all \glspl{trainable variable} that were used to produce the \lstinline{DualNumber}, not only the partial derivative of input. As a result, the type of delta varies when the number of \glspl{trainable variable} grows.
+However, it is hard to type this approach if we want to support multiple \glspl{trainable variable}, with the number unknown before runtime. \lstinline{PartialDelta} in Listing~\ref{DualNumber} represents the partial derivative of \glspl{trainable variable}. In AD tools that support only one \gls{trainable variable}, the \gls{trainable variable} is usually forced to be the input. Hence \lstinline{PartialDelta} is the input type for those AD tools. This assumption is broken for our case, since our delta type of a specific \lstinline{DualNumber} must contain derivatives for all \glspl{trainable variable} that were used to produce the \lstinline{DualNumber}, not only the partial derivative of input. As a result, the type of delta varies when the number of \glspl{trainable variable} grows.
 
-To type-check the delta, considering the only usage of the delta in a neural network is in updating \glspl{trainable variable} in a gradient descent based optimization algorithm. We can replace \lstinline{PartialDelta} to a \lstinline{UpdateWeights} closure Listing~\ref{class ClosureBasedDualNumber}. In order to implement arithmetic operations for the new dual number, the operations on \lstinline{PartialDelta} should be replaced to custom functions for \lstinline{UpdateWeights} (Listing~\ref{object ClosureBasedDualNumber}).
+To type-check the delta, considering the only usage of the delta in a neural network is in updating \glspl{trainable variable} in a gradient descent based optimization algorithm, we can replace \lstinline{PartialDelta} to an \lstinline{UpdateWeights} closure Listing~\ref{class ClosureBasedDualNumber}.
 
 \begin{lstlisting}[float={h t b p},caption={Replacing \lstinline{PartialDelta} to a closure}, label={class ClosureBasedDualNumber}]
 type Data = Double  
 case class ClosureBasedDualNumber(data: Data, backward: UpdateWeights)
 \end{lstlisting}
+
+Unlike \lstinline{PartialDelta}, \lstinline{UpdateWeights} is not a number that supports native arithmetic operations, thus we have to replace native arithmetic operations on \lstinline{PartialDelta} to some static functions on \lstinline{UpdateWeights} when implement arithmetic operations for the new dual number, as shown in Listing~\ref{object ClosureBasedDualNumber}
 
 \begin{lstlisting}[float={h t b p},caption={Replacing operations on \lstinline{PartialDelta} to custom functions for \lstinline{UpdateWeights}}, label={object ClosureBasedDualNumber}]  
 
@@ -503,7 +503,7 @@ object ClosureBasedDualNumber {
 }
 \end{lstlisting}
 
-So here comes the question: how to implement the \lstinline{UpdateWeights} to make its behavior be equivalent to the original dual number implementation.
+The only question remaining is to implement the \lstinline{UpdateWeights}, to make its behavior be equivalent to the original dual number implementation.
 
 Mathematically, the \lstinline{UpdateWeights} type in a dual number should form any vector space, i.e. the \lstinline{UpdateWeights} closure itself must support addition and scalar multiplication operations.
 
@@ -539,7 +539,7 @@ object UpdateWeights {
 \end{lstlisting}
 
 \lstinline{UpdateWeights}, as a replacement to original \lstinline{PartialDelta}, is a closure able to update derivatives for all weights with a coefficient (the \lstinline{Double} parameter).
-\lstinline{|+|} is the \lstinline{append} operation of \lstinline{scala.Semigroup}, which could be any cumulative data type.
+\lstinline{|+|} is the \lstinline{append} operation of \lstinline{Semigroup}, which could be any cumulative data type.
 
 Also note that the parameter is a monadic data type \href{https://javadoc.io/page/com.thoughtworks.raii/asynchronous_2.11/latest/com/thoughtworks/raii/asynchronous%24%24Do.html}{\lstinline{Do}} that encapsulates the computation of derivative. Unlike strictly evaluated values, \lstinline{Do} is an operation evaluated in need.
 
@@ -568,9 +568,7 @@ def createTrainableVariable(initialValue: Double, learningRate: Double): Closure
 }
 \end{lstlisting}
 
-In Listing~\ref{createTrainableVariable}, the \gls{trainable variable} is trained by a fixed learning rate to simplify the hyperparameters of optimization algorithms. The actual DeepLearning.scala implementation uses a more sophisticated approach to configure the hyperparameters  \begin{anonsuppress} described in \cite{yang2017expression}
-\end{anonsuppress}
-.
+In Listing~\ref{createTrainableVariable}, the \gls{trainable variable} is trained by a fixed learning rate to simplify the hyperparameters of optimization algorithms. The actual DeepLearning.scala implementation has a more sophisticated mechanism to custom the implementation of side effects, allowing other optimizers and custom hyperparameters.
 
 Similar to \glspl{trainable variable}, a non-trainable value can be represented as a tuple of the value and a no-op closure shown in Listing~\ref{createLiteral}.
 
@@ -690,9 +688,6 @@ def diamondDependentComputationalGraph(x: ClosureBasedDualNumber) = {
 
 The \gls{computational graph} of \lstinline{diamondDependentComputationalGraph} are shown in Figure~\ref{diamond}.
 
-
-
-
 \begin{figure}[h t b p]
 
   \begin{dot2tex}[dot,mathmode]
@@ -758,7 +753,7 @@ The process in \lstinline{y2.backward} is shown in Figure~\ref{diamond backpropa
 
 Generally, given $n$ levels of nested diamond dependencies, the computational complexity is $O(2^n)$, which is unacceptable for neural networks that may share common \glspl{differentiable expression}.
 
-We introduced a reference counting algorithm for dual numbers, to avoid the exponential time complexity.
+We introduced a reference counting algorithm for dual numbers, to avoid the exponential time complexity, by only calling backward once.
 
 The reference counting is managed in a wrapper of \lstinline{Tape}, which has additional \lstinline{acquire} and \lstinline{release} functions.
 
@@ -997,7 +992,7 @@ Since CIFAR-100 dataset has both coarse-grained and fine-grained labels, we crea
 We constructed mini-batches by coarse-grained class when training. All samples in a mini-batch belongs to one coarse-grained class. With the help of the feature of dynamic neural network in DeepLearning.scala, for each training iteration, only one fine-grained classifier is used, other 19 fine-grained classifiers are skipped. When inference, the fine-grained classifier is chosen dynamically according to the prediction by coarse-grained classifier. For comparison, we also created another set of benchmarks that do not skip unmatched fine-grained classifiers.
 
 
-The benchmark result when training these models is shown in Table~\ref{The benchmark result when unmatched fine-grained classifier is skipped} and Table~\ref{The benchmark result when no fine-grained classifier is skipped} (larger score is better). The sizes of those dense layers previous to softmax layers in these models are the number of classes (20 for coarse-grained classifier, 5 for fine-grained classifiers). Other dense layers output 64 features. These models are trained in a SGD optimizer with batch size 16. Both the number of columns in each model and the number of threads used in training vary among benchmarks.
+The benchmark result when training these models is shown in Table~\ref{benchmark-dont-skip-fine-grained} and Table~\ref{benchmark-skip-fine-grained} (larger score is better). The sizes of those dense layers previous to softmax layers in these models are the number of classes (20 for coarse-grained classifier, 5 for fine-grained classifiers). Other dense layers output 64 features. These models are trained in a SGD optimizer with batch size 16. Both the number of columns in each model and the number of threads used in training vary among benchmarks.
 
 \begin{table}[htbp]
   \begin{tabular}{l|l|l|rl}
@@ -1014,7 +1009,7 @@ The benchmark result when training these models is shown in Table~\ref{The bench
   \texttt{1} & \texttt{4} & \texttt{6.328} & \scriptsize $\pm$ \texttt{0.058}  \\
   \end{tabular}
   \caption{The benchmark result when no fine-grained classifier is skipped}
-  \label{The benchmark result when no fine-grained classifier is skipped}
+  \label{benchmark-dont-skip-fine-grained}
 \end{table}
 
 \begin{table}[htbp]
@@ -1032,7 +1027,7 @@ The benchmark result when training these models is shown in Table~\ref{The bench
   \texttt{1} & \texttt{4} & \texttt{14.513} & \scriptsize $\pm$ \texttt{0.554}  \\
   \end{tabular}
   \caption{The benchmark result when unmatched fine-grained classifiers are skipped}
-  \label{The benchmark result when unmatched fine-grained classifiers are skipped}
+  \label{benchmark-skip-fine-grained}
 \end{table}
 
 The benchmark result verified the performance improvement when increasing thread pool size, since DeepLearning.scala execute independent sub-networks in parallel. This benchmark also shows performance improvement when unmatched fine-grained classifiers are skipped.
@@ -1077,7 +1072,7 @@ We discovered the third mechanism of monadic deep learning. Neural networks in D
 
 \subsection{AD in a Functional Library}
 
-Reverse mode AD in a functional library was previously impossible to implement without the ability to reflectively access and transform expressions associated with closures \cite{pearlmutter2008reverse}. For example, if you want to create a \lstinline{transform} function that returns the derivative for given function \lstinline{f}:
+Reverse mode AD as a functional library was previously considered as impossible to implement without the ability to reflectively access and transform expressions associated with closures \cite{pearlmutter2008reverse}. For example, if you want to create a \lstinline{transform} function that returns the derivative for given function \lstinline{f}:
 
 \begin{lstlisting}[float={h t b p},caption={Impossible transform function for AD}, label={transform}]
 def transform(f: Double => Double): Double => Double
@@ -1096,19 +1091,27 @@ def typeSafeTransform(f: Double => DoubleLayer): Double => SideEffects = { input
 
 Unlike \cite{pearlmutter2008reverse}'s compiler primitive $\overleftarrow{J}$, our \lstinline{typeSafeTransform} can use the additional methods on \lstinline{DoubleLayer}. As a result, our \lstinline{typeSafeTransform} can be implemented without reflection, as an ordinary Scala function, instead of a compiler primitive or a macro.
 
-We also change the derivative type to an opaque monadic type \lstinline{SideEffects}. Unlike \lstinline{Double} derivative, \lstinline{SideEffects} can contain derivatives for more than one \glspl{trainable variable}, although this change exclude the ability of higher order numerical differentiation.
+We also change the derivative type to an opaque monadic type \lstinline{SideEffects}. Unlike numeric derivative, \lstinline{SideEffects} can contain derivatives for more than one \glspl{trainable variable}, although this change exclude the ability of higher order numerical differentiation.
+
+% There are other approach for statically typed deep learning framework *citation*, however they all has different property, and we believe our approach is interesting in it's own right.
+
+% Haskell AD - do not mention tensor in anyway, thus hard to run on GPU
+% Grenade - only allow you to define NN in traditional layer-wise sense, so no differentiable programming
+% Lantern - it look really good to me. it's only problem AFAICS is not encapsualting param.
+% Relay - is a seprate IR, and has almost no interoperability with python left
 
 \section{Conclusion}
 
 DeepLearning.scala is the first framework that achieves all the following goals:
 
 \begin{itemize}
-  \item type safe
-  \item purely functional
+  \item static type safety
+  \item purely functional interface
   \item reverse mode AD
   \item multiple \glspl{trainable variable}
   \item interoperable internal DSL
   \item dynamic neural network
+  \item statically type check the generated neural network
 \end{itemize}
 
 With the help of DeepLearning.scala, a normal programmer is able to build complex neural networks from simple code. He still writes code as usual, and the only difference is that the code written in DeepLearning.scala are differentiable, which contains \glspl{trainable variable} that learn knowledge.

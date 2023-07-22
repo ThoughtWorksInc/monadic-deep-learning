@@ -25,7 +25,27 @@
           languages = {
             texlive = {
               enable = true;
-              packages = ["scheme-full"];
+              packages = [
+                "collection-basic"
+                "scheme-medium"
+                "upquote"
+                "newtx"
+                "inconsolata"
+                "libertine"
+                "xstring"
+                "totpages"
+                "environ"
+                "ncctools"
+                "comment"
+                "pgf-umlsd"
+                "ifoddpage"
+                "relsize"
+                "dot2texi"
+                "enumitem"
+                "glossaries"
+                "moreverb"
+                "preview"
+              ];
             };
             
             python = {

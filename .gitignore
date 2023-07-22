@@ -1,6 +1,7 @@
 *.aux
 *.bbl
 *.blg
+*.cut
 *.dvi
 *.fdb_latexmk
 *.fls
@@ -19,3 +20,5 @@
 *-dot2tex-fig*.dot
 *-dot2tex-fig*.tex
 *.synctex(busy)
+.devenv
+.direnv

@@ -1,5 +1,9 @@
 %% For double-blind review submission, w/o CCS and ACM Reference (max submission space)
 \documentclass[acmsmall,10pt,review,screen,anonymous]{acmart}
+\usepackage{ifpdf}
+\ifpdf
+\pdfoutput=1 % Force arXiv to process with pdflatex.
+\fi
 \settopmatter{printfolios=true,printccs=false,printacmref=false}
 
 
